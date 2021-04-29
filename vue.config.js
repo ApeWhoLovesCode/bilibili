@@ -17,11 +17,33 @@ module.exports = {
       '/api': {
         target: 'https://www.bilibili.com/index',//源地址
         changeOrigin: true,//是否允许跨域
-        ws: false,//是否代理websockets
+        // ws: false,//是否代理websockets
         pathRewrite: {
           '^/api': ''
         }
-      }
+      },
+      '/hot': {
+        target: 'https://s.search.bilibili.com/main',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/hot': ''
+        }
+      },
+      '/bbsearch': {
+        target: 'https://api.bilibili.com',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/bbsearch': ''
+        }
+      },
+      '/defaultsearch': {
+        target: 'http://api.bilibili.cn',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/defaultsearch': ''
+        }
+      },
+
     },
     before: app => { }
   },

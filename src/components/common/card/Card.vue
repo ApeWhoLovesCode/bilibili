@@ -2,7 +2,7 @@
   <div class="card">
     <!-- v-for="(item, index) in animation"
       :key="index" -->
-    <card-list :animation-item="animation"></card-list>
+    <card-list :maindata-item="maindata" :mdname-item="mdname"></card-list>
   </div>
 </template>
 
@@ -15,11 +15,15 @@ export default {
     CardList,
   },
   props: {
-    animation: {
+    maindata: {
       type: Array,
       default() {
         return [];
       },
+    },
+    mdname: {
+      type: String,
+      default: "",
     },
   },
 };

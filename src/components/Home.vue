@@ -6,7 +6,7 @@
     <el-container>
       <!-- 头部导航模块 -->
       <el-header class="min_width">
-        <nav-bar></nav-bar>
+        <nav-bar :hotsearch="hotData"></nav-bar>
         <div class="banner">
           <img src="../assets/img/b-banner.png" alt="" />
         </div>
@@ -26,10 +26,7 @@
                 <a href="#">
                   <div class="tab_left_item2">
                     <div class="round">
-                      <i
-                        class="iconfont icon-icon_bilibili-circle"
-                        :style="item"
-                      ></i>
+                      <i class="iconfont" :class="item.class" :style="item"></i>
                     </div>
                     <span>{{ item.name }}</span>
                   </div>
@@ -59,7 +56,7 @@
                 :key="i"
               >
                 <a href="#">
-                  <i class="iconfont icon-game" :style="item"></i>
+                  <i class="iconfont" :class="item.class" :style="item"></i>
                   <span class="tab_right_text">{{ item.name }}</span>
                 </a>
               </li>
@@ -73,8 +70,10 @@
             <!-- 轮播图 -->
             <el-carousel trigger="click" arrow="never">
               <el-carousel-item v-for="(item, i) in swiperList" :key="i">
-                <img class="swiper_img" :src="item.pic" />
-                <div class="swiper_title">{{ item.title }}</div>
+                <div @click="jumpPath(item.title)">
+                  <img class="swiper_img" :src="item.pic" />
+                  <div class="swiper_title">{{ item.title }}</div>
+                </div>
               </el-carousel-item>
             </el-carousel>
 
@@ -85,8 +84,10 @@
                 :key="i"
                 class="s_r_c_item"
               >
-                <img :src="item.pic" />
-                <div class="s_r_c_title">{{ item.title }}</div>
+                <div @click="jumpPath(item.title)">
+                  <img :src="item.pic" />
+                  <div class="s_r_c_title">{{ item.title }}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -94,48 +95,90 @@
 
         <!-- 各种内容 -->
         <div class="b-wrap">
+          <!-- 动画 -->
           <div class="various-content">
             <!-- 卡片区域 -->
-            <card :animation="animationList" class="various-c-card"></card>
+            <card
+              :maindata="animationList"
+              :mdname="'animationList'"
+              class="various-c-card"
+            ></card>
             <!-- 排行榜 -->
             <top-list
-              :animation="animationList"
+              :maindata="animationList"
               class="various-c-toplist"
             ></top-list>
           </div>
 
+          <!-- 舞蹈 -->
           <div class="various-content">
             <!-- 卡片区域 -->
-            <card :animation="danceList" class="various-c-card"></card>
+            <card
+              :maindata="danceList"
+              :mdname="'danceList'"
+              class="various-c-card"
+            ></card>
             <!-- 排行榜 -->
             <top-list
-              :animation="danceList"
+              :maindata="danceList"
               class="various-c-toplist"
             ></top-list>
           </div>
 
+          <!-- 游戏 -->
           <div class="various-content">
             <!-- 卡片区域 -->
-            <card :animation="gameList" class="various-c-card"></card>
+            <card
+              :maindata="gameList"
+              :mdname="'gameList'"
+              class="various-c-card"
+            ></card>
+            <!-- 排行榜 -->
+            <top-list :maindata="gameList" class="various-c-toplist"></top-list>
+          </div>
+
+          <!-- 音乐 -->
+          <div class="various-content">
+            <!-- 卡片区域 -->
+            <card
+              :maindata="musicList"
+              :mdname="'musicList'"
+              class="various-c-card"
+            ></card>
             <!-- 排行榜 -->
             <top-list
-              :animation="gameList"
+              :maindata="musicList"
               class="various-c-toplist"
             ></top-list>
           </div>
 
+          <!-- 时尚 -->
           <div class="various-content">
             <!-- 卡片区域 -->
-            <card :animation="musicList" class="various-c-card"></card>
+            <card
+              :maindata="fashionList"
+              :mdname="'fashionList'"
+              class="various-c-card"
+            ></card>
             <!-- 排行榜 -->
             <top-list
-              :animation="musicList"
+              :maindata="fashionList"
               class="various-c-toplist"
             ></top-list>
           </div>
         </div>
       </el-main>
+
+      <!-- 底部 -->
+      <v-footer class="home-footer"></v-footer>
     </el-container>
+
+    <!-- 回到顶部 -->
+    <el-backtop>
+      <div class="backtop-main">
+        <img src="../assets/img/backtop.png" alt="" />
+      </div>
+    </el-backtop>
   </div>
 </template>
 
@@ -155,20 +198,32 @@ export default {
   data() {
     return {
       tabsLeftList: [
-        { id: 1, name: "首页", color: "#ff5c7c" },
-        { id: 2, name: "动态", color: "#73c9e5" },
-        { id: 3, name: "热门", color: "#ff716d" },
-        { id: 4, name: "频道", color: "#6dc781" },
+        { id: 1, name: "首页", background: "#ff5c7c", class: "icon-shouye" },
+        {
+          id: 2,
+          name: "动态",
+          background: "#73c9e5",
+          class: "icon-iconfontdongtai",
+        },
+        { id: 3, name: "热门", background: "#ff716d", class: "icon-remen" },
+        {
+          id: 4,
+          name: "频道",
+          background: "#6dc781",
+          class: "icon-icon_bilibili-circle",
+        },
       ],
       tabsList: [],
       tabsRightList: [
-        { name: "专栏", color: "#54e2e2" },
-        { name: "活动", color: "#f39800" },
-        { name: "小黑屋", color: "#ffd043" },
-        { name: "直播", color: "#23ade5" },
-        { name: "课堂", color: "#ffea85" },
-        { name: "音乐PLUS", color: "#3da9d3" },
+        { name: "专栏", color: "#54e2e2", class: "icon-zhuanlan" },
+        { name: "活动", color: "#f39800", class: "icon-huodong" },
+        { name: "小黑屋", color: "#ffd043", class: "icon-tianping" },
+        { name: "直播", color: "#23ade5", class: "icon-15" },
+        { name: "课堂", color: "#ffea85", class: "icon-jingpinketang" },
+        { name: "音乐PLUS", color: "#3da9d3", class: "icon-yinle" },
       ],
+      // 页面数据
+      mainDataList: [],
       // 轮播图数据
       swiperList: [],
       // 轮播图右边数据
@@ -181,14 +236,45 @@ export default {
       gameList: [],
       // 音乐模块数据
       musicList: [],
+      // 时尚模块数据
+      fashionList: [],
+      // 热搜数据
+      hotData: [],
     };
   },
   created() {
+    // 获取tab栏数据
     this.getTabsList();
 
-    this.getSwiperList();
+    // 获取所有的数据
+    this.getMainDataList();
+
+    // 获取热搜数据
+    this.getHotData();
   },
-  mounted() {},
+  watch: {
+    animationList(val) {
+      this.$forceUpdate();
+    },
+  },
+  mounted() {
+    // 事件总线 接收换一换发出的事件
+    this.$bus.$on("changeList", (mdnameItem) => {
+      if (mdnameItem === "animationList") {
+        this.getAnimationList();
+      } else if (mdnameItem === "danceList") {
+        this.getDanceList();
+      } else if (mdnameItem === "gameList") {
+        this.getGameList();
+      } else if (mdnameItem === "musicList") {
+        this.getMusicList();
+      } else if (mdnameItem === "fashionList") {
+        this.getFashionList();
+      } else {
+        this.$message.error("换一换，数据更新失败");
+      }
+    });
+  },
   methods: {
     // 获取tabs栏的数据
     async getTabsList() {
@@ -202,15 +288,18 @@ export default {
       this.tabsList = res.data.navList;
     },
 
-    // 获取第一部分的内容数据
-    async getSwiperList() {
+    // 获取所有的数据
+    async getMainDataList() {
       const { data: res } = await this.$axiosbili({
-        url: "/ding.json",
+        url: "/api/ding.json",
         method: "post",
       });
       if (res.code !== 0) {
         return;
       }
+
+      // 保存所有数据
+      this.mainDataList = res;
 
       // 获取轮播图和他旁边内容的数据
       for (let i = 0; i < 4; i++) {
@@ -239,15 +328,122 @@ export default {
       for (let i in res.music) {
         this.musicList.push(res.music[i]);
       }
+
+      // 获取时尚数据
+      for (let i in res.fashion) {
+        this.fashionList.push(res.fashion[i]);
+      }
+    },
+
+    // 获取动画数据
+    async getAnimationList() {
+      const { data: res } = await this.$axiosbili({
+        url: "/api/ding.json",
+        method: "post",
+      });
+      if (res.code !== 0) {
+        return;
+      }
+      // 清空数组
+      this.animationList.splice(0, this.animationList.length);
+      for (let i in res.bangumi) {
+        this.animationList.push(res.bangumi[i]);
+      }
+    },
+
+    // 获取舞蹈数据
+    async getDanceList() {
+      const { data: res } = await this.$axiosbili({
+        url: "/api/ding.json",
+        method: "post",
+      });
+      if (res.code !== 0) {
+        return;
+      }
+      // 清空数组
+      this.danceList.splice(0, this.danceList.length);
+      for (let i in res.dance) {
+        this.danceList.push(res.dance[i]);
+      }
+    },
+
+    // 获取游戏数据
+    async getGameList() {
+      const { data: res } = await this.$axiosbili({
+        url: "/api/ding.json",
+        method: "post",
+      });
+      if (res.code !== 0) {
+        return;
+      }
+      // 清空数组
+      this.gameList.splice(0, this.gameList.length);
+      for (let i in res.game) {
+        this.gameList.push(res.game[i]);
+      }
+    },
+
+    // 获取音乐数据
+    async getMusicList() {
+      const { data: res } = await this.$axiosbili({
+        url: "/api/ding.json",
+        method: "post",
+      });
+      if (res.code !== 0) {
+        return;
+      }
+      // 清空数组
+      this.musicList.splice(0, this.musicList.length);
+      for (let i in res.music) {
+        this.musicList.push(res.music[i]);
+      }
+    },
+
+    // 获取时尚数据
+    async getFashionList() {
+      const { data: res } = await this.$axiosbili({
+        url: "/api/ding.json",
+        method: "post",
+      });
+      if (res.code !== 0) {
+        return;
+      }
+      // 清空数组
+      this.fashionList.splice(0, this.fashionList.length);
+      for (let i in res.fashion) {
+        this.fashionList.push(res.fashion[i]);
+      }
+    },
+
+    // 获取热搜数据
+    async getHotData() {
+      const { data: res } = await this.$axiosbili({
+        url: "/hot/hotword",
+        method: "post",
+      });
+      if (res.code !== 0) {
+        return;
+      }
+      this.hotData = res.list;
+    },
+
+    // 点击跳转路径
+    jumpPath(keyword) {
+      this.$router.push(`/search?keyword=${keyword}`);
     },
   },
 };
 </script>
 
 <style>
+.el-container {
+  min-width: 1300px !important;
+}
 .el-header {
   /* padding: 0 !important; */
   position: relative;
+  /* 背景渐变 */
+  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(97, 112, 94, 0.1));
 }
 .banner {
   position: absolute;
@@ -266,7 +462,7 @@ export default {
 
 /* 主体区域 */
 .el-main {
-  margin-top: 93px;
+  margin-top: 7%;
   height: 100%;
   padding: 0 !important;
 }
@@ -310,10 +506,17 @@ export default {
   display: inline-block;
   width: 36px;
   height: 36px;
+  line-height: 36px;
 }
 
 .round i {
-  font-size: 36px;
+  color: #fff;
+  border-radius: 50%;
+  padding: 5px;
+  font-size: 20px;
+}
+.tab_left_item2 span {
+  /* margin-top: -5px; */
 }
 
 /* tab栏中间区域 */
@@ -361,8 +564,8 @@ export default {
   margin-top: 5px;
 }
 .tab_right_item i {
-  font-size: 20px;
-  margin-right: 2px;
+  font-size: 18px;
+  margin-right: 5px;
 }
 /* 第一内容 */
 .first-content {
@@ -429,17 +632,22 @@ export default {
 
 .s_r_c_item img {
   width: 100%;
-  height: 100%;
+  display: block;
 }
 .s_r_c_title {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
+  line-height: 23px;
   color: #fff;
   font-size: 14px;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 2px 5px;
+  background-image: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.6),
+    rgba(119, 119, 119, 0.1)
+  );
+  padding: 2px 5px 5px;
   /* 一行显示 */
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -462,5 +670,15 @@ export default {
 
 .various-c-toplist {
   flex: 1;
+}
+
+/* 底部 */
+.home-footer {
+  margin-top: 50px;
+}
+
+/* 回到顶部 */
+.backtop-main img {
+  width: 120%;
 }
 </style>
