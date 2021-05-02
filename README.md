@@ -8,15 +8,15 @@
 
 <img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210429171314051.png" alt="image-20210429171314051" style="zoom:30%;" />
 
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210429171405003.png" style="zoom:40%;" />
 
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210429171405003.png" alt="image-20210429171405003" style="zoom:30%;" />
 
 点击图片中的内容，会跳转到官方b站的相应视频页面，由于网上没有视频的接口(人家赚钱的东西当然不能有啦😂)，所以就没有进行接下来的制作了。
 
 #### 首页制作
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210429172400998.png" alt="image-20210429172400998" style="zoom:50%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210429172400998.png" style="zoom:50%;" />
 
 用 element-ui 和 html 加 css 相结合的方式尽可能的还原哔哩哔哩页面，首页主要布局分4部分
 
@@ -24,25 +24,23 @@
 
 ​	自定义封装好 nav-bar 用于首页和搜索页面使用。搜索框会根据页面的宽度大小来显示与隐藏，主要功能代码如下
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501091718892.png" alt="image-20210501091718892" style="zoom:80%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501091718892.png" style="zoom:80%;" />
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501091748662.png" alt="image-20210501091748662" style="zoom:80%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501091748662.png" style="zoom:80%;" />
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501091811244.png" alt="image-20210501091811244" style="zoom:80%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501091811244.png" style="zoom:80%;" />
 
 ​	搜索框下方的提示使用 el-autocomplete 组件将获取到的数据进行效果展示
 
 <img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501092214610.png" alt="image-20210501092214610" style="zoom:30%;" />
 
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501092545360.png" style="zoom:67%;" />
 
+​																					数据获取
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501092545360.png" alt="image-20210501092545360" style="zoom:50%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501092729529.png" style="zoom:80%;" />
 
-​																		数据获取
-
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501092729529.png" alt="image-20210501092729529" style="zoom:67%;" />
-
-​																		html结构
+​																				html结构
 
 #### 2 tab栏区域的绘制
 
@@ -56,7 +54,7 @@
 
 ​	在项目根路径中新建一个 vue.config.js 文件
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501093613995.png" alt="image-20210501093613995" style="zoom:50%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501093613995.png" style="zoom:80%;" />
 
 ​	在里面添加图中红框框出来的关键代码 （修改完 vue.config.js 文件记得要重新跑一次项目）
 
@@ -64,15 +62,13 @@
 
 ​	在 main.js 文件中导入并注册全局 axios
 
-![image-20210501093759748](C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501093759748.png)
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501093759748.png" style="zoom:90%;" />
 
-![image-20210501093812445](C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501093812445.png)
+![](https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501093812445.png)
 
 ​	在 Home.js 文件中使用，根据前面定义的名字，在这里直接使用就可以替换原路径
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501093909013.png" alt="image-20210501093909013" style="zoom:80%;" />
-
-​	
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501093909013.png" style="zoom:80%;" />
 
 ​	紧接着这里还会出现请求过来的图片的跨域问题。
 
@@ -90,15 +86,13 @@
 
 ​	这里我觉得加在这个文件中就可以（但我没有尝试过，如果不行可尝试下面方法）
 
-![image-20210501095636777](C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501095636777.png)
-
-
+![](https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501095636777.png)
 
 ​	一开始我不知道加在哪，因为这里是 vue 项目全是 .vue 文件，于是用了一种绕一点的方法
 
 ​	首先在 router 的配置文件中添加
 
-​									<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501095153172.png" alt="image-20210501095153172" style="zoom:80%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501095153172.png" style="zoom:80%;" />
 
 ​	再在 main.js 文件中添加如下代码 就相当于新增了一个 meta 标签
 
@@ -129,7 +123,7 @@ router.beforeEach((to, from, next) => {
 
 <img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210429173053423.png" alt="image-20210429173053423" style="zoom:67%;" />
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210429173313819.png" alt="image-20210429173313819" style="zoom:100%;" />
+![](https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210429173313819.png)
 
 ​	由于接口数据有限，排行榜的展示顺序是根据左边视频内容的播放量，来进行排序展示的。
 
@@ -141,17 +135,21 @@ router.beforeEach((to, from, next) => {
 
 #### 搜索页面制作
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501091248934.png" alt="image-20210501091248934" style="zoom:60%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501091248934.png" style="zoom:50%;" />
 
 #### 1 顶部继续复用封装好的 navbar
 
 ​	 但这里是搜索页面，不显示搜索框
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501091555936.png" alt="image-20210501091555936" style="zoom:80%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501091555936.png" style="zoom:67%;" />
 
 #### 2 页面中的搜索和 tab 栏区域
 
+
+
 <img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501100056831.png" alt="image-20210501100056831" style="zoom:40%;" />
+
+
 
 #### 3 可折叠的选择标签区域
 
@@ -159,7 +157,7 @@ router.beforeEach((to, from, next) => {
 
 ​	这里的布局和功能的实现是最为复杂的，折叠区域用 el-collapse 进行功能绘制，在 el-collapse-item 中放入 el-radio-group 单选按钮来进行 标签 选择，展开的内容为：时长的标签和分区的标签。
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501102542347.png" alt="image-20210501102542347" style="zoom:80%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501102542347.png" style="zoom:67%;" />
 
 ##### 第一行标签 （综合排序等）
 
@@ -181,11 +179,11 @@ router.beforeEach((to, from, next) => {
 
 ​	这里是先获取点击到的标签，改变 currentTime 的值
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210502112958006.png" alt="image-20210502112958006" style="zoom:80%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210502112958006.png" style="zoom:67%;" />
 
 ​	接下来就可以监听 currentTime 的值，只要变化了就根据变化的数值来决定返回的时间
 
-![image-20210502113219422](C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210502113219422.png)
+![](https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210502113219422.png)
 
 ​	下面是点击tab栏时间的方法，就由于接口中获取过来的时间是一个字符串，所以下面要进行两次的时间格式的转换。
 
@@ -259,7 +257,7 @@ router.beforeEach((to, from, next) => {
 
 ​	在分区的标签中，要再嵌套一个 el-popover 的弹出框 下面分三部分进行介绍。
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501103049905.png" alt="image-20210501103049905" style="zoom:80%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501103049905.png" style="zoom:80%;" />
 
 ##### 	1 弹出框的使用
 
@@ -267,7 +265,7 @@ router.beforeEach((to, from, next) => {
 
 ​		我们可以看到的分区按钮，但这里也出现了一些小问题（我解决了一个多小时）。
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501103358512.png" alt="image-20210501103358512" style="zoom:100%;" />
+![](https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501103358512.png)
 
 ​		第一个就是 el-popover 和 el-radio-button 嵌套使用时会出现 BUG ，解决方法就是：在 	el-radio-button 外部再嵌套一个button。
 
@@ -275,7 +273,7 @@ router.beforeEach((to, from, next) => {
 
 ​		首先创建 preventReClick.js 文件 ，复制下面代码
 
-![image-20210501104553209](C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501104553209.png)
+![](https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501104553209.png)
 
 ```
 export default {
@@ -299,13 +297,13 @@ export default {
 
 ​		紧接着在 main.js 中导入这个文件
 
-![image-20210501104731196](C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501104731196.png)
+![](https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501104731196.png)
 
 ​		由于b站官网这里的弹出框点击其他地方是不消失的，后面我把 el-popover 的触发方式改为了 trigger="manual" 手动的，所以上面的方法可能就不需要了。但这里可以记录一下防止以后再次踩坑！！
 
 ##### 	3 选择分区后，弹出框的按钮
 
-![image-20210501103554927](C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501103554927.png)
+![](https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501103554927.png)
 
 ​		这里也存在点击两次的问题，但不会影响功能的实现，但可以作为优化然后记录一下
 
@@ -331,11 +329,13 @@ partitionItemClick(e, item) {
 
 ​	由于要根据获取到的数据进行渲染，这里也是封装成一个独立的组件 videoitem.vue，便于复用。
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501100713396.png" alt="image-20210501100713396" style="zoom:50%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501100713396.png" style="zoom:60%;" />
+
+
 
 ​	下面格式化标签中播放量和日期的计算属性
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210502113846741.png" alt="image-20210502113846741" style="zoom:67%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210502113846741.png" style="zoom:67%;" />
 
 #### 项目心得体会
 
