@@ -6,7 +6,7 @@
 
 #### 两个页面的效果展示：
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210429171314051.png" alt="image-20210429171314051" style="zoom:30%;" />
+![](https://gitee.com/wooden-joint/bilibili/raw/master/img/20210502142358.png)
 
 <img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210429171405003.png" style="zoom:40%;" />
 
@@ -32,7 +32,7 @@
 
 ​	搜索框下方的提示使用 el-autocomplete 组件将获取到的数据进行效果展示
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501092214610.png" alt="image-20210501092214610" style="zoom:30%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/20210502142431.png" alt="image-20210501092214610" style="zoom:30%;" />
 
 <img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210501092545360.png" style="zoom:67%;" />
 
@@ -121,7 +121,7 @@ router.beforeEach((to, from, next) => {
 
 ​	由于需要多次复用，将视频内容展示和排行榜都各自封装成组件
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210429173053423.png" alt="image-20210429173053423" style="zoom:67%;" />
+![](https://gitee.com/wooden-joint/bilibili/raw/master/img/20210502142515.png)
 
 ![](https://gitee.com/wooden-joint/bilibili/raw/master/img/image-20210429173313819.png)
 
@@ -145,15 +145,13 @@ router.beforeEach((to, from, next) => {
 
 #### 2 页面中的搜索和 tab 栏区域
 
-
-
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501100056831.png" alt="image-20210501100056831" style="zoom:40%;" />
+<img src="https://gitee.com/wooden-joint/bilibili/raw/master/img/20210502142555.png" style="zoom:40%;" />
 
 
 
 #### 3 可折叠的选择标签区域
 
-<img src="C:\Users\啊桓啊\AppData\Roaming\Typora\typora-user-images\image-20210501100359328.png" alt="image-20210501100359328" style="zoom:50%;" />
+![](https://gitee.com/wooden-joint/bilibili/raw/master/img/20210502142622.png)
 
 ​	这里的布局和功能的实现是最为复杂的，折叠区域用 el-collapse 进行功能绘制，在 el-collapse-item 中放入 el-radio-group 单选按钮来进行 标签 选择，展开的内容为：时长的标签和分区的标签。
 
