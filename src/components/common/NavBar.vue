@@ -389,7 +389,6 @@ export default {
           return;
         }
         this.searchDefaults = res.data.show_name;
-        console.log(this.searchDefaults);
       } catch (err) {
         this.searchDefaults = "请输入内容";
       }
@@ -398,7 +397,6 @@ export default {
     // 请求搜索建议
     async getSuggest() {
       const { data: res } = await this.$axiosbili.get("/defaultsearch/suggest");
-      console.log(res);
     },
   },
 };

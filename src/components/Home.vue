@@ -1,7 +1,4 @@
 <template>
-  <!--  <head>
-    <meta name="referrer" content="no-referrer" />
-  </head> -->
   <div id="home">
     <el-container>
       <!-- 头部导航模块 -->
@@ -514,9 +511,6 @@ export default {
   border-radius: 50%;
   padding: 5px;
   font-size: 20px;
-}
-.tab_left_item2 span {
-  /* margin-top: -5px; */
 }
 
 /* tab栏中间区域 */
