@@ -51,28 +51,21 @@
         >
           <el-collapse-item name="1">
             <template slot="title">
-              <el-radio-group v-model="sortActive" size="mini">
-                <el-radio-button
-                  class="selectbtn"
-                  label="综合排序"
-                  @click.native="comprehensiveSort"
-                ></el-radio-button>
-                <el-radio-button
-                  label="最多点击"
-                  @click.native="mostClick"
-                ></el-radio-button>
-                <el-radio-button
-                  label="最新发布"
-                  @click.native="latestRelease"
-                ></el-radio-button>
-                <el-radio-button
-                  label="最多弹幕"
-                  @click.native="mostChat"
-                ></el-radio-button>
-                <el-radio-button
-                  label="最多收藏"
-                  @click.native="mostCollection"
-                ></el-radio-button>
+              <el-radio-group
+                @change="orderChange"
+                v-model="sortActive"
+                size="mini"
+              >
+                <el-radio-button label="综合排序"></el-radio-button>
+                <!-- @click.native="comprehensiveSort" -->
+                <el-radio-button label="最多点击"></el-radio-button>
+                <!-- @click.native="mostClick" -->
+                <el-radio-button label="最新发布"></el-radio-button>
+                <!-- @click.native="latestRelease" -->
+                <el-radio-button label="最多弹幕"></el-radio-button>
+                <!-- @click.native="mostChat" -->
+                <el-radio-button label="最多收藏"></el-radio-button>
+                <!-- @click.native="mostCollection" -->
               </el-radio-group>
             </template>
             <!-- 展开的内容 -->
@@ -149,9 +142,9 @@
         <!-- 分割线 -->
         <el-divider></el-divider>
 
-        <div>
-          <!-- 视频内容 -->
-          <div class="video-list" v-show="mainDataYes">
+        <!-- 视频内容 -->
+        <div v-show="mainDataYes">
+          <div class="video-list">
             <video-item
               class="main-data-item"
               :class="currentIndex == index ? 'item-hover' : ''"
@@ -162,10 +155,18 @@
               @mouseleave.native="leave()"
             ></video-item>
           </div>
-
-          <div class="video-list-no" v-show="!mainDataYes">
-            <img src="../assets/img/no-data.png" alt="" />
-          </div>
+          <!-- 分页功能 -->
+          <el-pagination
+            :background="true"
+            layout="prev, pager, next"
+            @current-change="handleCurrentChange"
+            :current-page="currentPage"
+            :total="500"
+          >
+          </el-pagination>
+        </div>
+        <div class="video-list-no" v-show="!mainDataYes">
+          <img src="../assets/img/no-data.png" alt="" />
         </div>
       </div>
     </div>
@@ -203,6 +204,8 @@ export default {
       collapseActiveName: "1",
       // 激活的综合排序
       sortActive: "综合排序",
+      // 当前的排序方式
+      currentOrder: "default",
       // 激活的时长
       durationActive: "全部时长",
       // 激活的全部分区
@@ -218,6 +221,8 @@ export default {
       currentIndex: null,
       // 判断当前选择的时间
       currentTime: 0,
+      // 当前页码
+      currentPage: 1,
     };
   },
   created() {
@@ -225,15 +230,24 @@ export default {
   },
   mounted() {},
   watch: {
+    // 监听当前选择的时间
     currentTime() {
       this.allTimeMethods();
     },
+    // 监听主要内容数据
     mainDataList(val) {
       if (val.length === 0) {
         this.mainDataYes = false;
         return;
       }
       this.mainDataYes = true;
+    },
+    // 监听激活的时长
+    durationActive() {
+      this.promptMessage();
+    },
+    partitionActive() {
+      this.promptMessage();
     },
   },
   methods: {
@@ -244,7 +258,7 @@ export default {
     async getData() {
       // let searchData = this.$lodash.cloneDeep(this.searchInput);
       const { data: res } = await this.$axiosbili({
-        url: `/bbsearch/x/web-interface/search/type?keyword=${this.searchInput}&search_type=video`,
+        url: `/bbsearch/x/web-interface/search/type?keyword=${this.searchInput}&search_type=video&page=${this.currentPage}&order=${this.currentOrder}`,
         method: "get",
       });
       // 如果请求失败 对象中就没有 result 这个属性
@@ -256,12 +270,17 @@ export default {
       this.mainDataYes = true;
       this.mainDataList = res.data.result;
       this.mainDataListCopy = res.data.result;
-
-      this.sortActive = "综合排序";
-      this.durationActive = "全部时长";
-      this.partitionActive = "全部分区";
-      // 综合排序
-      this.comprehensiveSort();
+      // 格式化获取的时间
+      this.formatTime();
+    },
+    // 格式化获取的时间
+    formatTime() {
+      let arr = this.$lodash.cloneDeep(this.mainDataListCopy);
+      // 将时间转化为秒
+      arr = this.changeSeconds(arr);
+      // 将时间格式化
+      arr = this.formatSeconds(arr);
+      this.mainDataList = this.$lodash.cloneDeep(arr);
     },
     // 确定搜索
     searchConfirm() {
@@ -275,39 +294,37 @@ export default {
       newQuery.keyword = this.searchInput;
       this.$router.push({ path, query: newQuery });
     },
-    // 综合排序的方法（得分最高）
-    comprehensiveSort() {
+    // 排序发生改变
+    orderChange(val) {
+      switch (val) {
+        case "综合排序":
+          this.currentOrder = "default";
+          break;
+        case "最多点击":
+          this.currentOrder = "click";
+          break;
+        case "最新发布":
+          this.currentOrder = "pubdate";
+          break;
+        case "最多弹幕":
+          this.currentOrder = "damku";
+          break;
+        case "最多收藏":
+          this.currentOrder = "stow";
+          break;
+      }
+      this.getData();
+    },
+    // 综合排序的方法（得分最高）最多点击等其他同理
+    /* comprehensiveSort() {
       // sort 不传参就是按照字符编码的顺序进行排序
       // 提供比较函数，该函数要比较两个值
       // obj1 小于 obj2，在排序后的数组中 obj1 应该出现在 obj2 之前 返回一个小于 0 的值
+      // 1.0 没有分页时 直接对数据进行排序
       this.mainDataList.sort((obj1, obj2) => {
         return obj2.rank_score - obj1.rank_score;
       });
-    },
-    // 最多点击的方法
-    mostClick() {
-      this.mainDataList.sort((obj1, obj2) => {
-        return obj2.play - obj1.play;
-      });
-    },
-    // 最新发布的方法
-    latestRelease() {
-      this.mainDataList.sort((obj1, obj2) => {
-        return obj2.pubdate - obj1.pubdate;
-      });
-    },
-    // 最多弹幕的方法
-    mostChat() {
-      this.mainDataList.sort((obj1, obj2) => {
-        return obj2.video_review - obj1.video_review;
-      });
-    },
-    // 最多收藏的方法
-    mostCollection() {
-      this.mainDataList.sort((obj1, obj2) => {
-        return obj2.favorites - obj1.favorites;
-      });
-    },
+    }, */
 
     // 点击tab栏时间的方法
     allTimeMethods() {
@@ -353,12 +370,12 @@ export default {
       function allTime(time) {
         if (time < 60) {
           let s = time > 0 ? time : "";
-          s = s <= 10 ? "0" + s : s;
+          s = s < 10 ? "0" + s : s;
           timeFormat = timeFormat + s;
           return;
         } else {
           let m = Math.floor(time / 60);
-          m = m <= 10 ? "0" + m : m;
+          m = m < 10 ? "0" + m : m;
           timeFormat = timeFormat + m + ":";
           allTime(time - m * 60);
         }
@@ -412,6 +429,7 @@ export default {
       // 因为原生click事件会执行两次，第一次在label标签上，
       // 第二次在input标签上，故此处理
       if (e.target.tagName === "INPUT") return;
+      this.promptMessage();
       let arr = this.$lodash.cloneDeep(this.mainDataListCopy);
       let arr2 = [];
       arr.forEach((value) => {
@@ -427,7 +445,23 @@ export default {
         this.partitionList[i].pvisible = false;
       });
     },
+    // 当前页发生改变
+    handleCurrentChange(val) {
+      this.currentPage = val;
+      this.getData();
+    },
 
+    // 提示信息
+    promptMessage() {
+      this.$message({
+        // 可关闭
+        showClose: true,
+        message: "由于数据问题，仅对当前页有效噢!",
+        type: "warning",
+        // 持续时间
+        duration: "1500",
+      });
+    },
     // 鼠标事件
     enter(i) {
       this.currentIndex = i;
@@ -532,9 +566,13 @@ export default {
 .item-hover {
   background: rgba(223, 223, 223, 0.3);
 }
-/* .item-hover .v-i-title {
-  color: #52aae2;
-} */
+
+/* 分页 */
+.el-pagination {
+  margin-top: 40px;
+  text-align: center;
+  background: "#00a1d6";
+}
 
 /* 底部 */
 .home-footer {

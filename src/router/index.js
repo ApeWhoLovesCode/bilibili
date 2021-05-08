@@ -1,7 +1,11 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Home from '../components/Home.vue'
-import Search from '../components/Search.vue'
+// import Home from '../components/Home.vue'
+// import Search from '../components/Search.vue'
+
+// 懒加载 动态加载
+const Home = () => import('../components/Home.vue')
+const Search = () => import('../components/Search.vue')
 
 Vue.use(VueRouter)
 

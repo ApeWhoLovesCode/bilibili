@@ -20,7 +20,8 @@ import {
   Message,
   Radio,
   Badge,
-  Backtop
+  Backtop,
+  Pagination
 } from 'element-ui'
 
 Vue.use(Button)
@@ -43,6 +44,7 @@ Vue.use(RadioButton)
 Vue.use(Radio)
 Vue.use(Badge)
 Vue.use(Backtop)
+Vue.use(Pagination)
 
 
 // 需要全局挂载 挂载到Vue的原型上

@@ -151,3 +151,9 @@ img {
 .el-divider--horizontal {
   margin: 8px 0;
 }
+
+/* 分页激活按钮的颜色 */
+.el-pagination.is-background .el-pager li:not(.disabled).active{
+  background: #00a1d6;
+}
+

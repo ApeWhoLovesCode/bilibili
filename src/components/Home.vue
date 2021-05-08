@@ -64,8 +64,8 @@
         <!-- 第一部分内容 -->
         <div class="b-wrap first-content">
           <div class="space-between">
-            <!-- 轮播图 -->
-            <el-carousel trigger="click" arrow="never">
+            <!-- 轮播图 arrow="never" -->
+            <el-carousel trigger="click" :autoplay="false">
               <el-carousel-item v-for="(item, i) in swiperList" :key="i">
                 <div @click="jumpPath(item.title)">
                   <img class="swiper_img" :src="item.pic" />
@@ -302,6 +302,7 @@ export default {
       for (let i = 0; i < 4; i++) {
         this.swiperList.push(res.douga[i]);
       }
+      console.log(this.swiperList);
       for (let i = 4; i < 10; i++) {
         this.swiperList_r.push(res.douga[i]);
       }
@@ -583,11 +584,12 @@ export default {
   height: 100% !important;
 }
 .el-carousel__item {
-  position: relative;
+  /* position: relative; */
   width: 550px;
   height: 100% !important;
 }
 .swiper_img {
+  display: inline-block;
   width: 100%;
 }
 .swiper_title {
