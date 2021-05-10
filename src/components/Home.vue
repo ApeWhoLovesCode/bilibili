@@ -5,7 +5,7 @@
       <el-header class="min_width">
         <nav-bar :hotsearch="hotData"></nav-bar>
         <div class="banner">
-          <img src="../assets/img/b-banner.png" alt="" />
+          <img src="../assets/img/b-banner.jpg" alt="" />
         </div>
       </el-header>
       <!-- 主体区域 -->

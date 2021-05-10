@@ -258,8 +258,15 @@ export default {
     async getData() {
       // let searchData = this.$lodash.cloneDeep(this.searchInput);
       const { data: res } = await this.$axiosbili({
-        url: `/bbsearch/x/web-interface/search/type?keyword=${this.searchInput}&search_type=video&page=${this.currentPage}&order=${this.currentOrder}`,
+        // url: `/bbsearch/x/web-interface/search/type?keyword=${this.searchInput}&search_type=video&page=${this.currentPage}&order=${this.currentOrder}`,
+        url: "/bbsearch/x/web-interface/search/type",
         method: "get",
+        params: {
+          keyword: this.searchInput,
+          search_type: "video",
+          page: this.currentPage,
+          order: this.currentOrder,
+        },
       });
       // 如果请求失败 对象中就没有 result 这个属性
       if (res.code === -400 || res.data.result === undefined) {
