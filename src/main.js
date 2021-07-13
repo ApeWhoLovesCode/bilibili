@@ -7,6 +7,9 @@ import './plugins/element.js'
 import axios from "axios"
 // 导入lodash
 import _ from 'lodash'
+// 1.图片懒加载
+// npm install vue-lazyload --save
+import VueLazyLoad from 'vue-lazyload'
 
 // 导入防止多次点击的节流方法
 import preventReClick from './preventReClick'
@@ -25,15 +28,9 @@ import VFooter from "./components/common/footer/VFooter"
 Vue.prototype.$lodash = _;
 
 Vue.prototype.$axiosbili = axios
-// axios.defaults.baseURL = '/search'
-// Vue.prototype.$axiosbili.defaults.baseURL = '/api'
-
-// Vue.prototype.$axiossearch = _.cloneDeep(axios)
-// Vue.prototype.$axiossearch.defaults.baseURL = '/search'
 
 // 事件总线 发射:this.$bus.$emit('aaaa')  接收:this.$bus.$on('aaaa',function)
 Vue.prototype.$bus = new Vue()
-
 
 Vue.config.productionTip = false
 
@@ -41,7 +38,13 @@ Vue.config.productionTip = false
 Vue.component('nav-bar', NavBar)
 Vue.component('v-footer', VFooter)
 
-// 路由操作 解决跨域问题
+// 2.使用懒加载的插件   3.修改img :src -> v-lazy
+Vue.use(VueLazyLoad, {
+  // 占位图: 还没加载完，用这个图片代替
+  loading: require('./assets/img/bilibili.png')
+})
+
+//路由操作 解决跨域问题
 router.beforeEach((to, from, next) => {
   /* 路由发生变化修改页面meta */
   if (to.meta.content) {

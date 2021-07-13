@@ -68,7 +68,7 @@
             <el-carousel trigger="click" :autoplay="false">
               <el-carousel-item v-for="(item, i) in swiperList" :key="i">
                 <div @click="jumpPath(item.title)">
-                  <img class="swiper_img" :src="item.pic" />
+                  <img class="swiper_img" v-lazy="item.pic" />
                   <div class="swiper_title">{{ item.title }}</div>
                 </div>
               </el-carousel-item>
@@ -82,7 +82,7 @@
                 class="s_r_c_item"
               >
                 <div @click="jumpPath(item.title)">
-                  <img :src="item.pic" />
+                  <img v-lazy="item.pic" />
                   <div class="s_r_c_title">{{ item.title }}</div>
                 </div>
               </div>
@@ -302,7 +302,6 @@ export default {
       for (let i = 0; i < 4; i++) {
         this.swiperList.push(res.douga[i]);
       }
-      console.log(this.swiperList);
       for (let i = 4; i < 10; i++) {
         this.swiperList_r.push(res.douga[i]);
       }

@@ -29,7 +29,8 @@
       >
         <!-- 图片 -->
         <div class="item-pic">
-          <img :src="item.pic" alt="" />
+          <!-- 3.图片懒加载修改img :src -> v-lazy -->
+          <img v-lazy="item.pic" alt="" />
           <div class="count">
             <i class="iconfont icon-bofangliang1"></i>
             {{ tenThousand(item.stat.view) }}

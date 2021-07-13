@@ -2,7 +2,8 @@
   <div class="video-item">
     <a :href="mainData.arcurl">
       <div class="v-i-pic">
-        <img :src="mainData.pic" alt="" />
+        <!-- 3.图片懒加载修改img :src -> v-lazy -->
+        <img v-lazy="mainData.pic" alt="" />
         <span>{{ mainData.duration }}</span>
       </div>
       <!-- 解析数据中的html标签 -->
