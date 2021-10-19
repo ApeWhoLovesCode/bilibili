@@ -288,7 +288,7 @@ export default {
     // 获取所有的数据
     async getMainDataList() {
       const { data: res } = await this.$axiosbili({
-        url: "/api/ding.json",
+        url: "/api/index/ding.json",
         method: "post",
       });
       if (res.code !== 0) {
@@ -335,7 +335,7 @@ export default {
     // 获取动画数据
     async getAnimationList() {
       const { data: res } = await this.$axiosbili({
-        url: "/api/ding.json",
+        url: "/api/index/ding.json",
         method: "post",
       });
       if (res.code !== 0) {
@@ -351,7 +351,7 @@ export default {
     // 获取舞蹈数据
     async getDanceList() {
       const { data: res } = await this.$axiosbili({
-        url: "/api/ding.json",
+        url: "/api/index/ding.json",
         method: "post",
       });
       if (res.code !== 0) {
@@ -367,7 +367,7 @@ export default {
     // 获取游戏数据
     async getGameList() {
       const { data: res } = await this.$axiosbili({
-        url: "/api/ding.json",
+        url: "/api/index/ding.json",
         method: "post",
       });
       if (res.code !== 0) {
@@ -383,7 +383,7 @@ export default {
     // 获取音乐数据
     async getMusicList() {
       const { data: res } = await this.$axiosbili({
-        url: "/api/ding.json",
+        url: "/api/index/ding.json",
         method: "post",
       });
       if (res.code !== 0) {
@@ -399,7 +399,7 @@ export default {
     // 获取时尚数据
     async getFashionList() {
       const { data: res } = await this.$axiosbili({
-        url: "/api/ding.json",
+        url: "/api/index/ding.json",
         method: "post",
       });
       if (res.code !== 0) {
@@ -415,7 +415,7 @@ export default {
     // 获取热搜数据
     async getHotData() {
       const { data: res } = await this.$axiosbili({
-        url: "/hot/hotword",
+        url: "/hot/main/hotword",
         method: "post",
       });
       if (res.code !== 0) {
