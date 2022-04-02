@@ -1,16 +1,38 @@
 <template>
-  <div id="app">
-    <!-- 加了keep-alive 就不会销毁 会被缓存下来 -->
-    <!-- <keep-alive> -->
-    <!-- 路由占位符 -->
-    <router-view></router-view>
-    <!-- </keep-alive> -->
+  <div class="page-planeWar">
+  <div v-if="!playState" class="playgame">BUG大战点击飞机开始游戏</div>
+    <img
+      ref="mouseImg"
+      class="mouse-img"
+      :class="mouseMove"
+      src="../assets/img/plane.png"
+      @click="getMouse"
+      @dblclick="clearAll"
+    />
+    <!-- 子弹 -->
+    <span
+      class="bullet"
+      v-for="(item, index) in allBullet"
+      :key="index"
+      :style="{ top: item.y + 'px', left: item.x + 'px' }"
+    ></span>
+    <!-- 敌人 -->
+    <img
+      src="../assets/img/bug.png"
+      class="enemy"
+      v-for="(item, index) in allEnemy"
+      :key="index + 4399"
+      :style="{ top: item.y + 'px', left: item.x + 'px' }"
+    />
+    <!-- 得分 -->
+    <span v-if="playState" class="score">已消灭BUG: {{ score }}</span>
+    <span v-if="playState" class="bugnum">新产生BUG: {{ bugNum }}</span>
   </div>
 </template>
 
 <script>
 export default {
-  name: "app",
+  name: "planewar",
   data() {
     return {
       // 游戏状态
@@ -97,13 +119,6 @@ export default {
       },
       deep: true,
     },
-    // 监听浏览器窗口改变
-    // windowWidth(val) {
-    //   // this.windowWidth = val;
-    // },
-    // windowHeight(val) {
-    //   // this.windowHeight = val;
-    // },
   },
   created() {
     this.windowWidth = document.documentElement.clientWidth;
@@ -246,63 +261,62 @@ export default {
 };
 </script>
 
-<style>
-#app {
-  position: relative;
-}
-.playgame {
-  position: absolute;
-  right: 30px;
-  top: 100px;
-  width: 60px;
-  font-size: 14px;
-  color: #00a1d6;
-}
-.mouse-img {
-  position: absolute;
-  right: 30px;
-  top: 200px;
-  width: 50px;
-  height: 50px;
-  z-index: 2;
-  cursor: default;
-}
-.bullet {
-  position: absolute;
-  right: 53px;
-  top: 200px;
-  width: 3px;
-  height: 10px;
-  border-top-left-radius: 50%;
-  border-top-right-radius: 50%;
-  /* background: #efbe50; */
-  background-image: linear-gradient(#f3dd61, #e0b244);
-  z-index: 2;
-}
-.enemy {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  z-index: 2;
-  transform: rotateZ(180deg);
-}
-.score {
-  position: absolute;
-  top: 15px;
-  left: 45%;
-  /* transform: translateX(-50%); */
-  display: inline-block;
-  color: #3d5970;
-  font-size: 20px;
-  font-weight: bold;
-}
-.bugnum {
-  position: absolute;
-  top: 40px;
-  left: 45%;
-  display: inline-block;
-  color: #3d5970;
-  font-size: 20px;
-  font-weight: bold;
+<style lang="less" scoped>
+.page-planeWar {
+  .playgame {
+    position: absolute;
+    right: 30px;
+    top: 200px;
+    width: 60px;
+    font-size: 14px;
+    color: #00a1d6;
+  }
+  .mouse-img {
+    position: absolute;
+    right: 30px;
+    top: 300px;
+    width: 50px;
+    height: 50px;
+    z-index: 2;
+    cursor: default;
+  }
+  .bullet {
+    position: absolute;
+    right: 53px;
+    top: 200px;
+    width: 3px;
+    height: 10px;
+    border-top-left-radius: 50%;
+    border-top-right-radius: 50%;
+    /* background: #efbe50; */
+    background-image: linear-gradient(#f3dd61, #e0b244);
+    z-index: 2;
+  }
+  .enemy {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    z-index: 2;
+    transform: rotateZ(180deg);
+  }
+  .score {
+    position: absolute;
+    top: 15px;
+    left: 45%;
+    /* transform: translateX(-50%); */
+    display: inline-block;
+    color: #3d5970;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  .bugnum {
+    position: absolute;
+    top: 40px;
+    left: 45%;
+    display: inline-block;
+    color: #3d5970;
+    font-size: 20px;
+    font-weight: bold;
+  }
 }
 </style>

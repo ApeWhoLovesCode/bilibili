@@ -6,6 +6,7 @@ import VueRouter from 'vue-router'
 // 懒加载 动态加载
 const Home = () => import('../components/Home.vue')
 const Search = () => import('../components/Search.vue')
+const ProtectTheHorse = () => import('../components/protectTheHorse/index.vue')
 
 Vue.use(VueRouter)
 
@@ -22,6 +23,13 @@ const routes = [
   {
     path: '/search', component: Search, meta: {
       title: "ViliVili",
+      name: "referrer",
+      content: "no-referrer"
+    }
+  },
+  {
+    path: '/protectTheHorse', component: ProtectTheHorse, meta: {
+      title: "protectTheHorse",
       name: "referrer",
       content: "no-referrer"
     }

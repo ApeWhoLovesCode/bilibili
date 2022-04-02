@@ -176,6 +176,7 @@
         <img src="../assets/img/backtop.png" alt="" />
       </div>
     </el-backtop>
+    <PlaneWar />
   </div>
 </template>
 
@@ -185,12 +186,14 @@ import axios from "axios";
 // 组件
 import Card from "./common/card/Card";
 import TopList from "./common/toplist/TopList";
+import PlaneWar from "@/components/planeWar"
 
 export default {
   name: "Home",
   components: {
     Card,
     TopList,
+    PlaneWar,
   },
   data() {
     return {
