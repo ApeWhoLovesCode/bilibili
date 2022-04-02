@@ -34,7 +34,7 @@ export default {
       // 偏移量 敌人与地面的距离
       offset: {x: 25, y: 15},
       // 敌人生成间隔时间
-      intervalTime: 2000, 
+      intervalTime: 300, 
       // 存放上一次和本次生成的敌人时间戳，用于暂停判断还有多久产生敌人
       timeDiff: {curTime: 0, stopTime: 0},
       // 生成敌人的定时器
@@ -47,12 +47,12 @@ export default {
       enemy: [],
       // 敌人资源 curFloorI: 当前所在格的索引 
       enemySource: [
-        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
-        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, type: 'zombies_1', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
-        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, type: 'zombies_2', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
-        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, type: 'zombies_3', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
-        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, type: 'zombies_4', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
-        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, type: 'zombies_5', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
+        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 10, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
+        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 10, type: 'zombies_1', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
+        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 10, type: 'zombies_2', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
+        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 10, type: 'zombies_3', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
+        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 10, type: 'zombies_4', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
+        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 10, type: 'zombies_5', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
       ],
       // 最小刻度
       minScale: 2,
@@ -95,6 +95,7 @@ export default {
     level: {
       immediate: true,
       handler(val) {
+        console.log('val: ', val);
         switch (val) {
           case 0: {
             const list = [0]
@@ -102,6 +103,28 @@ export default {
               list.push(1)
             }
             list.push(5)
+            this.levelEnemy = list
+            break;
+          }
+          case 1: {
+            const list = [0]
+            for(let i = 0; i < 4; i++) {
+              list.push(2)
+            }
+            for(let i = 0; i < 5; i++) {
+              list.push(3)
+            }
+            this.levelEnemy = list
+            break;
+          }
+          case 2: {
+            const list = [0]
+            for(let i = 0; i < 5; i++) {
+              list.push(4)
+            }
+            for(let i = 0; i < 5; i++) {
+              list.push(5)
+            }
             this.levelEnemy = list
             break;
           }
@@ -139,15 +162,19 @@ export default {
     startDraw() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.drawFloorTile()
-      this.enemy.forEach((item, index) => {
-        this.moveEnemy(index)
+      for(let index = 0; index < this.enemy.length; index++) {
+        const item = this.enemy[index]
+        const res = this.moveEnemy(index)
+        // 当敌人已经到达终点，后面就不执行了
+        if(res) break
         this.drawEnemy(index)
         if(item.imgIndex === item.imgList.length - 1) this.enemy[index].imgIndex = 0
         else this.enemy[index].imgIndex++
-      })
+      }
     },
     // 画敌人
     drawEnemy(index) {
+      if(!this.enemy[index]) return
       const { x, y, w, h, imgList, imgIndex } = this.enemy[index]
       // this.ctx.translate(200, 0);
       // this.ctx.scale(-1, 1)
@@ -157,6 +184,17 @@ export default {
     // 敌人移动
     moveEnemy(index) {
       const { speed, curFloorI } = this.enemy[index]
+      // 敌人到达终点
+      if(curFloorI === this.floorTile.num - 1) {
+        this.enemy.splice(index, 1)
+        // 最后一只怪物消失了
+        if(index === 0 && this.enemy.length === 1) {
+          this.level++
+          this.parse = true
+          this.makeEnemy()
+        }
+        return true
+      }
       const { x, y, x_y } = this.movePath[curFloorI]
       const _y = y - (this.floorTile.size - this.offset.y)
       const _x = x - this.offset.x
@@ -175,7 +213,7 @@ export default {
     },
     // 按间隔时间生成敌人
     makeEnemy(isInit) {
-      // 当前关卡敌人已经开发完
+      // 当前关卡敌人已经全部上场
       if(this.enemy.length === this.levelEnemy.length) return
       // 刚开始生成了一个敌人 然后因为是暂停，所以会清除定时器
       if(isInit) {
