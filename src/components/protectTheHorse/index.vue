@@ -4,7 +4,7 @@
       <div class="title">{{title}}</div>
       <!-- 外层 宽800高450 -->
       <div class="canvas-wrap">
-        <canvas ref="canvasRef" id="mycanvas" width="1050" height="600"></canvas>
+        <canvas ref="canvasRef" id="mycanvas" width="1050" height="600" @click="getMouse($event)"></canvas>
         <div class="terminal">
           <div class="hp">{{hp}}</div>
           <img class="terminal-icon" src="./assets/img/horse.png" alt="">
@@ -23,6 +23,8 @@ export default {
       title: 'game',
       // canvas 对象
       canvas: {},
+      // canvas 画布距离浏览器左边和顶部的距离
+      canvasInfo: {left: 0, top: 0},
       // 得到 canvas 的 2d 上下文
       ctx: {},
       // 设置游戏的暂停
@@ -62,8 +64,10 @@ export default {
       },
       // 加载完成的静态图片
       imgOnloadObj: null,
+      // 格子数量信息 arr: [[0:初始值，1:地板，2:可以放塔，3:有建筑]]
+      gridInfo: { x_num: 21, y_num: 12, size: 50, arr: [[]] },
       // 地板：大小 数量
-      floorTile: {size: 50, num: 84},
+      floorTile: {size: 50, num: 83},
       // 移动轨迹 [{x坐标, y坐标, x_y(方向): 1:左 2:下 3:右 4:上}]
       movePath: [],
     }
@@ -134,11 +138,16 @@ export default {
   },
   mounted() {
     this.init();
+    setTimeout(() => {
+      this.getCanvasMargin();
+    }, 50);
   },
   methods: {
     async init() {
       this.canvas = this.$refs.canvasRef;
       this.ctx = this.canvas.getContext("2d");
+      this.initAllGrid()
+      this.initBuilding()
       this.initMovePath()
       this.onKeyDown()
       await this.allGifToStaticImg()
@@ -147,7 +156,19 @@ export default {
       this.makeEnemy(true)
       this.startAnimation()
     },
-    // 开启动画绘画
+    /** 点击获取鼠标位置 选中建筑区 */
+    getMouse(e) {
+      // canvas 中棋子的位置
+      let _x = window.event.pageX - this.canvasInfo.left;
+      let _y = window.event.pageY - this.canvasInfo.top;
+      console.log(_x, _y);
+      // 获取鼠标点击 下棋的位置
+      for (let i = 0; i < this.lineNum - 1; i++) {
+        for (let j = 0; j < this.lineNum - 1; j++) {
+        }
+      }
+    },
+    /** 开启动画绘画 */
     startAnimation() {
       const that = this;
       (function go() {
@@ -158,7 +179,7 @@ export default {
         }
       })();
     },
-    // 开始绘画
+    /** 开始绘画 */
     startDraw() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.drawFloorTile()
@@ -172,7 +193,14 @@ export default {
         else this.enemy[index].imgIndex++
       }
     },
-    // 画敌人
+    /** 画地板 */
+    drawFloorTile() {
+      const size = this.floorTile.size
+      for(let f of this.movePath) {
+        this.ctx.drawImage(this.imgOnloadObj.floorTile, f.x, f.y, size, size)
+      }
+    },
+    /** 画敌人 */
     drawEnemy(index) {
       if(!this.enemy[index]) return
       const { x, y, w, h, imgList, imgIndex } = this.enemy[index]
@@ -181,7 +209,7 @@ export default {
       // console.log('imgList[imgIndex]: ', imgList[imgIndex]);
       this.ctx.drawImage(imgList[imgIndex], x, y, w, h) 
     },
-    // 敌人移动
+    /** 敌人移动 */
     moveEnemy(index) {
       const { speed, curFloorI } = this.enemy[index]
       // 敌人到达终点
@@ -211,7 +239,7 @@ export default {
         this.enemy[index].curFloorI++
       }
     },
-    // 按间隔时间生成敌人
+    /** 按间隔时间生成敌人 */
     makeEnemy(isInit) {
       // 当前关卡敌人已经全部上场
       if(this.enemy.length === this.levelEnemy.length) return
@@ -235,34 +263,51 @@ export default {
         }, this.intervalTime)
       }, time)
     },
+    /** 生成敌人 */
     setEnemy() {
       console.log('生成敌人');
       this.timeDiff.curTime = Date.now()
       this.enemy.push(this.$lodash.cloneDeep(this.enemySource[this.levelEnemy[this.enemy.length]]))
     },
-    // 初始化行动轨迹
+    /** 初始化所有格子 */
+    initAllGrid() {
+      const { x_num, y_num } = this.gridInfo
+      const arr = []
+      for(let i = 0; i < x_num; i++) {
+        arr.push([])
+        for(let j = 0; j < y_num; j++) {
+          arr[i][j] = 0
+        }
+      }
+      this.gridInfo.arr = arr
+    },
+    /** 初始化建筑物 */
+    initBuilding() {
+
+    },
+    /** 初始化行动轨迹 */
     initMovePath() {
       const size = this.floorTile.size
-      const movePathItem = {x: 20, y: 50, x_y: 3}
+      // 刚开始就右移了，所有该初始格不会算上去
+      const movePathItem = {x: 0, y: 50, x_y: 3}
       const movePath = []
       // 控制x y轴的方向 1:左 2:下 3:右 4:上
       let x_y = 3
       for(let i = 0; i < this.floorTile.num; i++) {
         switch (i) {
-          // 相对于编程来说
-          // 正 Y 
+          // 上 
           case 3: case 15: case 21: case 39: case 58: case 68: {
             x_y = 4; break;
           }
-          // 正 X
+          // 右
           case 5: case 10: case 23: case 34: case 77: {
             x_y = 3; break;
           } 
-          // 负 Y
+          // 下
           case 8: case 29: case 51: case 62: case 74: case 79: {
             x_y = 2; break;
           } 
-          // 负 X
+          // 左
           case 18: case 48: case 53: case 60: case 64: case 70: case 81: {
             x_y = 1; break;
           } 
@@ -271,9 +316,16 @@ export default {
         else movePathItem.y += x_y === 4 ? size : -size
         movePathItem.x_y = x_y
         movePath.push(JSON.parse(JSON.stringify(movePathItem)))
+        this.gridInfo.arr[movePathItem.y/size][movePathItem.x/size] = 1
       }
       this.movePath = movePath
     },
+    /** 获取canvas与浏览器 左边 / 顶部 的距离 */
+    getCanvasMargin() {
+      this.canvasInfo.left = this.$refs.canvasRef.getBoundingClientRect().left;
+      this.canvasInfo.top = this.$refs.canvasRef.getBoundingClientRect().top;
+    },
+    /** 单张gif转静态图片 */
     gifToStaticImg(index) {
       return new Promise((resolve, reject) => {
         const gifImg = document.createElement('img');
@@ -294,20 +346,13 @@ export default {
         });
       })
     },
-    // 根据gif图生成静态图片
+    /** 等待所有的gif图生成静态图片 */
     async allGifToStaticImg() {
       return Promise.all(this.enemySource.map((item, index) => this.gifToStaticImg(index))).then(res => {
         console.log('--gif to static_img done--');
       })
     },
-    // 画地板
-    drawFloorTile() {
-      const size = this.floorTile.size
-      for(let f of this.movePath) {
-        this.ctx.drawImage(this.imgOnloadObj.floorTile, f.x, f.y, size, size)
-      }
-    },
-    // 加载图片
+    /** 加载图片 */
     loadImage(imgUrl) {
       return new Promise((resolve, reject) => {
         var imgObj = {}; // 保存图片资源
@@ -329,7 +374,7 @@ export default {
         }
       })
     },
-    // 监听用户的键盘事件
+    /** 监听用户的键盘事件 */
     onKeyDown() {
       document.onkeydown = (e) => {
         switch (e.code) {
@@ -375,7 +420,7 @@ export default {
     }
     .canvas-wrap {
       position: relative;
-      width: 1150px;
+      width: 1200px;
       height: 700px;
       background-image: radial-gradient(circle 500px at center, #16d9e3 0%, #30c7ec 47%, #46aef7 100%);
       border-radius: 4px;
