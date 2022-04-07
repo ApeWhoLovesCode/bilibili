@@ -63,7 +63,8 @@ export default {
       level: 0,
       // 生命值
       hp: 10,
-      // 偏移量 敌人与地面的距离
+      // 偏移量 用于将地板的位置和敌人图片的位置进行矫正
+      // x是图片左边空白区域的问题，y是用来计算敌人与地板底部的距离 (两个地板(50*2)-敌人(h(75)+y(15))) = 10
       offset: {x: 25, y: 15},
       // 敌人生成间隔时间
       intervalTime: 300, 
@@ -79,12 +80,12 @@ export default {
       enemy: [],
       // 敌人资源 curFloorI: 当前所在格的索引 
       enemySource: [
-        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 10, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
-        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 10, type: 'zombies_1', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
-        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 10, type: 'zombies_2', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
-        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 10, type: 'zombies_3', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
-        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 10, type: 'zombies_4', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
-        {x: 25, y: 15, w: 75, h: 75, curFloorI: 0, speed: 10, type: 'zombies_5', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_1', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_2', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_3', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_4', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_5', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
       ],
       // 最小刻度
       minScale: 2,
@@ -249,7 +250,7 @@ export default {
     },
     /** 敌人移动 */
     moveEnemy(index) {
-      const { speed, curFloorI } = this.enemy[index]
+      const { w, speed, curFloorI } = this.enemy[index]
       // 敌人到达终点
       if(curFloorI === this.floorTile.num - 1) {
         this.enemy.splice(index, 1)
@@ -261,8 +262,11 @@ export default {
         }
         return true
       }
+      const size = this.floorTile.size
+      // 将格子坐标同步到敌人的坐标
       const { x, y, x_y } = this.movePath[curFloorI]
-      const _y = y - (this.floorTile.size - this.offset.y)
+      const _y = y - (size - this.offset.y)
+      // const _x = x - (size - w)
       const _x = x - this.offset.x
       switch (x_y) {
         case 1: this.enemy[index].x -= speed; break;
@@ -271,11 +275,16 @@ export default {
         case 4: this.enemy[index].y += speed; break;
       }
       const { x: eX, y: eY } = this.enemy[index]
-      if(eX === _x && eY === _y) {
-        // console.log('敌人: ', eX, eY);
+      if(index === 0)  console.log(`敌人${index}: `, eX, eY);
+      // if((eX === _x || eX === _x + 1) && (eY === _y || eY === _y + 1)) {
+      if((eX === _x || eX === _x + 1) && (eY === _y || eY === _y + 1)) {
         // console.log('地板: ', _x, _y);
         this.enemy[index].curFloorI++
       }
+    },
+    /** 根据速度更改敌人位置 */
+    setEnemyPosition() {
+
     },
     /** 按间隔时间生成敌人 */
     makeEnemy(isInit) {
