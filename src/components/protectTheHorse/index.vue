@@ -2,9 +2,37 @@
   <div id="protect-horse">
     <div class="game-wrap">
       <div class="title">{{title}}</div>
-      <!-- 外层 宽800高450 -->
       <div class="canvas-wrap">
+        <!-- 游戏区域 -->
         <canvas ref="canvasRef" id="mycanvas" width="1050" height="600" @click="getMouse($event)"></canvas>
+        <!-- 建筑物的容器 -->
+        <!-- 上面和左边内边距是 50px -->
+        <div v-if="building.isShow" class="building-wrap" :style="{left: building.left + 50 + 'px', top: building.top + 50 + 'px'}">
+          <img src="./assets/img/add.png" alt="" class="add-icon">
+          <div class="tower-wrap" >
+            <div class="tower">
+              <img src="./assets/img/plant/qiezi.png" alt="" class="tower-icon">
+              <div class="info">$110</div>
+            </div>
+            <div class="tower">
+              <img src="./assets/img/plant/qiezi.png" alt="" class="tower-icon">
+              <div class="info">$110</div>
+            </div>
+            <div class="tower">
+              <img src="./assets/img/plant/qiezi.png" alt="" class="tower-icon">
+              <div class="info">$110</div>
+            </div>
+            <div class="tower">
+              <img src="./assets/img/plant/qiezi.png" alt="" class="tower-icon">
+              <div class="info">$110</div>
+            </div>
+            <div class="tower">
+              <img src="./assets/img/plant/qiezi.png" alt="" class="tower-icon">
+              <div class="info">$110</div>
+            </div>
+          </div>
+        </div>
+        <!-- 终点 -->
         <div class="terminal">
           <div class="hp">{{hp}}</div>
           <img class="terminal-icon" src="./assets/img/horse.png" alt="">
@@ -21,6 +49,8 @@ export default {
   data() {
     return {
       title: 'game',
+      // 浏览器大小变化
+      resizeTimer: null,
       // canvas 对象
       canvas: {},
       // canvas 画布距离浏览器左边和顶部的距离
@@ -64,12 +94,14 @@ export default {
       },
       // 加载完成的静态图片
       imgOnloadObj: null,
-      // 格子数量信息 arr: [[0:初始值，1:地板，2:可以放塔，3:有建筑]]
+      // 格子数量信息 arr: [[ 0:初始值(可以放塔)，1:地板，2:有建筑 ]]
       gridInfo: { x_num: 21, y_num: 12, size: 50, arr: [[]] },
       // 地板：大小 数量
       floorTile: {size: 50, num: 83},
       // 移动轨迹 [{x坐标, y坐标, x_y(方向): 1:左 2:下 3:右 4:上}]
       movePath: [],
+      // 建筑物
+      building: { left: 0, top: 0, isShow: false, tower: '' }
     }
   },
   watch: {
@@ -138,9 +170,12 @@ export default {
   },
   mounted() {
     this.init();
-    setTimeout(() => {
-      this.getCanvasMargin();
-    }, 50);
+    this.getCanvasMargin()
+    // 监听浏览器窗口大小变化
+    window.addEventListener("resize", this.getCanvasMargin);
+  },
+  destroyed() {
+    window.removeEventListener('resize', this.getCanvasMargin)
   },
   methods: {
     async init() {
@@ -158,15 +193,18 @@ export default {
     },
     /** 点击获取鼠标位置 选中建筑区 */
     getMouse(e) {
-      // canvas 中棋子的位置
-      let _x = window.event.pageX - this.canvasInfo.left;
-      let _y = window.event.pageY - this.canvasInfo.top;
-      console.log(_x, _y);
-      // 获取鼠标点击 下棋的位置
-      for (let i = 0; i < this.lineNum - 1; i++) {
-        for (let j = 0; j < this.lineNum - 1; j++) {
-        }
+      // window.event.pageX
+      const size = this.floorTile.size
+      const _x = e.x - this.canvasInfo.left, _y = e.y - this.canvasInfo.top
+      const col = Math.floor(_y / size), row = Math.floor(_x / size)
+      console.log(col, row);
+      // 已经有地板或者有建筑了
+      if(this.gridInfo.arr[col][row]) {
+        return
       }
+      this.building.isShow = true
+      this.building.left = row * size
+      this.building.top = col * size
     },
     /** 开启动画绘画 */
     startAnimation() {
@@ -322,8 +360,11 @@ export default {
     },
     /** 获取canvas与浏览器 左边 / 顶部 的距离 */
     getCanvasMargin() {
-      this.canvasInfo.left = this.$refs.canvasRef.getBoundingClientRect().left;
-      this.canvasInfo.top = this.$refs.canvasRef.getBoundingClientRect().top;
+      clearTimeout(this.resizeTimer)
+      this.resizeTimer = setTimeout(() => {
+        this.canvasInfo.left = this.$refs.canvasRef.getBoundingClientRect().left;
+        this.canvasInfo.top = this.$refs.canvasRef.getBoundingClientRect().top;
+      }, 50);
     },
     /** 单张gif转静态图片 */
     gifToStaticImg(index) {
@@ -420,15 +461,47 @@ export default {
     }
     .canvas-wrap {
       position: relative;
-      width: 1200px;
-      height: 700px;
+      padding: 50px 50px 30px;
       background-image: radial-gradient(circle 500px at center, #16d9e3 0%, #30c7ec 47%, #46aef7 100%);
       border-radius: 4px;
-      #mycanvas {
+      .building-wrap {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        user-select: none;
+        .add-icon {
+          width: 50px;
+          height: 50px;
+        }
+        .tower-wrap {
+          position: absolute;
+          top: 50px;
+          left: calc(50% - 120px);
+          width: 240px;
+          display: flex;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          .tower {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: 2px solid #fff;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            .tower-icon {
+              width: 100%;
+              height: 100%;
+            }
+            .info {
+              position: absolute;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              text-align: center;
+              font-size: 14px;
+              color: #fff;
+            }
+          }
+        }
       }
       .terminal {
         position: absolute;
