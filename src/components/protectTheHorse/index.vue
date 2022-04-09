@@ -2,33 +2,17 @@
   <div id="protect-horse">
     <div class="game-wrap">
       <div class="title">{{title}}</div>
-      <div class="canvas-wrap">
+      <div class="canvas-wrap" @click="bgClick">
         <!-- 游戏区域 -->
         <canvas ref="canvasRef" id="mycanvas" width="1050" height="600" @click="getMouse($event)"></canvas>
         <!-- 建筑物的容器 -->
         <!-- 上面和左边内边距是 50px -->
-        <div v-if="building.isShow" class="building-wrap" :style="{left: building.left + 50 + 'px', top: building.top + 50 + 'px'}">
+        <div v-if="building.isShow" class="building-wrap" :style="{left: building.left + floorTile.size + 'px', top: building.top + floorTile.size + 'px'}">
           <img src="./assets/img/add.png" alt="" class="add-icon">
           <div class="tower-wrap" >
-            <div class="tower">
-              <img src="./assets/img/plant/qiezi.png" alt="" class="tower-icon">
-              <div class="info">$110</div>
-            </div>
-            <div class="tower">
-              <img src="./assets/img/plant/qiezi.png" alt="" class="tower-icon">
-              <div class="info">$110</div>
-            </div>
-            <div class="tower">
-              <img src="./assets/img/plant/qiezi.png" alt="" class="tower-icon">
-              <div class="info">$110</div>
-            </div>
-            <div class="tower">
-              <img src="./assets/img/plant/qiezi.png" alt="" class="tower-icon">
-              <div class="info">$110</div>
-            </div>
-            <div class="tower">
-              <img src="./assets/img/plant/qiezi.png" alt="" class="tower-icon">
-              <div class="info">$110</div>
+            <div class="tower" v-for="(item, index) in towerList" @click="buildTower(index)">
+              <img :src="item.img" alt="" class="tower-icon">
+              <div class="info">￥{{item.money}}</div>
             </div>
           </div>
         </div>
@@ -63,9 +47,6 @@ export default {
       level: 0,
       // 生命值
       hp: 10,
-      // 偏移量 用于将地板的位置和敌人图片的位置进行矫正
-      // x是图片左边空白区域的问题，y是用来计算敌人与地板底部的距离 (两个地板(50*2)-敌人(h(75)+y(15))) = 10
-      offset: {x: 25, y: 15},
       // 敌人生成间隔时间
       intervalTime: 300, 
       // 存放上一次和本次生成的敌人时间戳，用于暂停判断还有多久产生敌人
@@ -78,14 +59,17 @@ export default {
       levelEnemy: [],
       // 场上的敌人数组  
       enemy: [],
-      // 敌人资源 curFloorI: 当前所在格的索引 
+      // 偏移量y 是用来计算敌人与地板底部的距离 (两个地板(50*2)-敌人(h(75)+y(15))) = 10
+      offset: {y: 10},
+      // 敌人资源 curFloorI: 当前所在格的索引, 速度有: 1，2，3，4，6，8，12，24
+      // ∵ offset.y = 10; ∴ h + y = 90
       enemySource: [
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 9, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_1', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_2', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_3', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_4', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_5', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5, w: 85, h: 85, curFloorI: 0, speed: 3, type: 'zombies_5', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
       ],
       // 最小刻度
       minScale: 2,
@@ -95,21 +79,32 @@ export default {
       },
       // 加载完成的静态图片
       imgOnloadObj: null,
-      // 格子数量信息 arr: [[ 0:初始值(可以放塔)，1:地板，2:有建筑 ]]
+      // 格子数量信息 arr: [[ 0:初始值(可以放塔)，1:地板，2:有建筑，3:有阻挡物 ]]
       gridInfo: { x_num: 21, y_num: 12, size: 50, arr: [[]] },
       // 地板：大小 数量
       floorTile: {size: 50, num: 83},
       // 移动轨迹 [{x坐标, y坐标, x_y(方向): 1:左 2:下 3:右 4:上}]
       movePath: [],
       // 建筑物
-      building: { left: 0, top: 0, isShow: false, tower: '' }
+      building: { left: 0, top: 0, isShow: false },
+      // 塔防数据
+      towerList: [
+        {money: 110, img: require("./assets/img/plant/qiezi.png")},
+        {money: 110, img: require("./assets/img/plant/pea_icon.gif")},
+        {money: 110, img: require("./assets/img/plant/pea_2_icon.gif")},
+        {money: 110, img: require("./assets/img/plant/pea_snow_icon.gif")},
+        {money: 110, img: require("./assets/img/plant/pea_3_icon.gif")},
+      ],
+      towerOnloadImg: null,
+      // 场上的防御塔数组
+      tower: []
     }
   },
   watch: {
     timeDiff: {
       deep: true,
       handler(val) {
-        // console.log(val.curTime, val.stopTime);
+        // 
       }
     },
     // 暂停的判断
@@ -121,7 +116,7 @@ export default {
           clearTimeout(this.pauseMakeEnemyTimer)
           clearInterval(this.makeEnemyTimer)
           this.timeDiff.stopTime = Date.now()
-          // console.log(this.timeDiff.stopTime - this.timeDiff.curTime);
+          // 
         } else {
           this.makeEnemy()
           this.startAnimation();
@@ -132,7 +127,6 @@ export default {
     level: {
       immediate: true,
       handler(val) {
-        console.log('val: ', val);
         switch (val) {
           case 0: {
             const list = [0]
@@ -189,16 +183,18 @@ export default {
       await this.allGifToStaticImg()
       // 加载图片
       this.imgOnloadObj = await this.loadImage(this.imgObj);
+      this.towerOnloadImg = await this.loadImage(this.towerList, true);
       this.makeEnemy(true)
       this.startAnimation()
     },
     /** 点击获取鼠标位置 选中建筑区 */
     getMouse(e) {
+      e.stopPropagation()
       // window.event.pageX
       const size = this.floorTile.size
       const _x = e.x - this.canvasInfo.left, _y = e.y - this.canvasInfo.top
       const col = Math.floor(_y / size), row = Math.floor(_x / size)
-      console.log(col, row);
+      
       // 已经有地板或者有建筑了
       if(this.gridInfo.arr[col][row]) {
         return
@@ -206,6 +202,19 @@ export default {
       this.building.isShow = true
       this.building.left = row * size
       this.building.top = col * size
+    },
+    /** 点击建造塔防 */
+    buildTower(index) {
+      const {left: x, top: y} = this.building
+      const size = this.gridInfo.size
+      const tower = {x, y, img: this.towerOnloadImg[index]}
+      this.tower.push(tower)
+      this.gridInfo.arr[y / size][x / size] = 2
+      this.drawTower(tower)
+    },
+    /** 点击背景 隐藏建筑物 */
+    bgClick() {
+      if(this.building.isShow) this.building.isShow = false
     },
     /** 开启动画绘画 */
     startAnimation() {
@@ -222,6 +231,7 @@ export default {
     startDraw() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.drawFloorTile()
+      this.drawTower()
       for(let index = 0; index < this.enemy.length; index++) {
         const item = this.enemy[index]
         const res = this.moveEnemy(index)
@@ -239,18 +249,29 @@ export default {
         this.ctx.drawImage(this.imgOnloadObj.floorTile, f.x, f.y, size, size)
       }
     },
+    /** 画塔防 */
+    drawTower(item) {
+      const size = this.floorTile.size
+      if(item) {
+        this.ctx.drawImage(item.img, item.x, item.y, size, size)
+      } else {
+        for(const t of this.tower) {
+          this.ctx.drawImage(t.img, t.x, t.y, size, size)
+        }
+      }
+    },
     /** 画敌人 */
     drawEnemy(index) {
       if(!this.enemy[index]) return
       const { x, y, w, h, imgList, imgIndex } = this.enemy[index]
       // this.ctx.translate(200, 0);
       // this.ctx.scale(-1, 1)
-      // console.log('imgList[imgIndex]: ', imgList[imgIndex]);
+      // 
       this.ctx.drawImage(imgList[imgIndex], x, y, w, h) 
     },
     /** 敌人移动 */
     moveEnemy(index) {
-      const { w, speed, curFloorI } = this.enemy[index]
+      const { w, h, speed, curFloorI } = this.enemy[index]
       // 敌人到达终点
       if(curFloorI === this.floorTile.num - 1) {
         this.enemy.splice(index, 1)
@@ -265,9 +286,10 @@ export default {
       const size = this.floorTile.size
       // 将格子坐标同步到敌人的坐标
       const { x, y, x_y } = this.movePath[curFloorI]
-      const _y = y - (size - this.offset.y)
-      // const _x = x - (size - w)
-      const _x = x - this.offset.x
+      // const _y = y - (size - this.offset.y)
+      const _y = y - (size - (size * 2 - h - this.offset.y))
+      // 敌人需要站在地板中间区域
+      const _x = x - (w - size)
       switch (x_y) {
         case 1: this.enemy[index].x -= speed; break;
         case 2: this.enemy[index].y -= speed; break;
@@ -275,10 +297,8 @@ export default {
         case 4: this.enemy[index].y += speed; break;
       }
       const { x: eX, y: eY } = this.enemy[index]
-      if(index === 0)  console.log(`敌人${index}: `, eX, eY);
-      // if((eX === _x || eX === _x + 1) && (eY === _y || eY === _y + 1)) {
-      if((eX === _x || eX === _x + 1) && (eY === _y || eY === _y + 1)) {
-        // console.log('地板: ', _x, _y);
+      // if(eX === _x && eY === _y) {
+      if((eX >= _x &&  eX <= _x + speed) && (eY >= _y &&  eY <= _y + speed)) {
         this.enemy[index].curFloorI++
       }
     },
@@ -298,7 +318,7 @@ export default {
       }
       // 暂停回来，间隔时间修改
       const time = this.intervalTime - (this.timeDiff.stopTime - this.timeDiff.curTime)
-      // console.log('time: ', time);
+      // 
       this.pauseMakeEnemyTimer = setTimeout(() => {
         this.setEnemy()
         this.makeEnemyTimer = setInterval(() => {
@@ -312,7 +332,7 @@ export default {
     },
     /** 生成敌人 */
     setEnemy() {
-      console.log('生成敌人');
+      
       this.timeDiff.curTime = Date.now()
       this.enemy.push(this.$lodash.cloneDeep(this.enemySource[this.levelEnemy[this.enemy.length]]))
     },
@@ -399,11 +419,11 @@ export default {
     /** 等待所有的gif图生成静态图片 */
     async allGifToStaticImg() {
       return Promise.all(this.enemySource.map((item, index) => this.gifToStaticImg(index))).then(res => {
-        console.log('--gif to static_img done--');
+        
       })
     },
     /** 加载图片 */
-    loadImage(imgUrl) {
+    loadImage(imgUrl, isTower) {
       return new Promise((resolve, reject) => {
         var imgObj = {}; // 保存图片资源
         var tempImg,
@@ -412,7 +432,7 @@ export default {
         for (var key in imgUrl) {
           imgLength++; // 初始化要加载图片的总数
           tempImg = new Image();
-          tempImg.src = imgUrl[key];
+          tempImg.src = !isTower ? imgUrl[key] : imgUrl[key].img;
           imgObj[key] = tempImg;
           tempImg.onload = function () {
             loaded++; // 统计已经加载完毕的图像
@@ -437,6 +457,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@size: 50px; 
 #protect-horse {
   box-sizing: border-box;
   width: 100vw;
@@ -477,21 +498,25 @@ export default {
         position: absolute;
         user-select: none;
         .add-icon {
-          width: 50px;
-          height: 50px;
+          width: @size;
+          height: @size;
         }
         .tower-wrap {
           position: absolute;
-          top: 50px;
+          top: calc(@size + 6px);
           left: calc(50% - 120px);
-          width: 240px;
+          // 50 * 5 = 250
+          width: calc(@size * 5 - 10px);
           display: flex;
           justify-content: space-between;
           flex-wrap: wrap;
+          background: rgba(255, 255, 255, .3);
+          border-radius: 16px;
+          padding: 12px;
           .tower {
             position: relative;
-            width: 50px;
-            height: 50px;
+            width: @size;
+            height: @size;
             border-radius: 8px;
             border: 2px solid #fff;
             margin-bottom: 10px;
@@ -517,6 +542,7 @@ export default {
         left: 20px;
         top: 45%;
         transform: translateY(-50%);
+        user-select: none;
         .hp {
           color: #f24410;
           font-size: 18px;
@@ -524,7 +550,7 @@ export default {
           text-align: center;
         }
         .terminal-icon {
-          width: 50px;
+          width: 60px;
         }
       }
     }
