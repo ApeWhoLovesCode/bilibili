@@ -2,12 +2,12 @@
   <div id="protect-horse">
     <div class="game-wrap">
       <div class="title">{{title}}</div>
-      <div class="canvas-wrap" @click="bgClick">
+      <div class="canvas-wrap" @click="hiddenTowerOperation">
         <!-- 游戏区域 -->
         <canvas ref="canvasRef" id="mycanvas" width="1050" height="600" @click="getMouse($event)"></canvas>
-        <!-- 建筑物的容器 -->
+        <!-- 塔防的容器 -->
         <!-- 上面和左边内边距是 50px -->
-        <div v-if="building.isShow" class="building-wrap" :style="{left: building.left + floorTile.size + 'px', top: building.top + floorTile.size + 'px'}">
+        <div v-show="building.isShow" class="building-wrap" :style="buildingStyle">
           <img src="./assets/img/add.png" alt="" class="add-icon">
           <div class="tower-wrap" >
             <div class="tower" v-for="(item, index) in towerList" @click="buildTower(index)">
@@ -16,6 +16,8 @@
             </div>
           </div>
         </div>
+        <!-- 塔防的攻击范围 -->
+        <div v-show="buildingScope.isShow" class="building-scope" :style="buildingScopeStyle"></div>
         <!-- 终点 -->
         <div class="terminal">
           <div class="hp">{{hp}}</div>
@@ -79,25 +81,40 @@ export default {
       },
       // 加载完成的静态图片
       imgOnloadObj: null,
-      // 格子数量信息 arr: [[ 0:初始值(可以放塔)，1:地板，2:有建筑，3:有阻挡物 ]]
+      // 格子数量信息 arr: [[ 0:初始值(可以放塔)，1:地板，2:有阻挡物，10(有塔防：10塔防一，11塔防二...) ]]
       gridInfo: { x_num: 21, y_num: 12, size: 50, arr: [[]] },
       // 地板：大小 数量
       floorTile: {size: 50, num: 83},
       // 移动轨迹 [{x坐标, y坐标, x_y(方向): 1:左 2:下 3:右 4:上}]
       movePath: [],
-      // 建筑物
+      // 塔防
       building: { left: 0, top: 0, isShow: false },
+      // 塔防攻击范围
+      buildingScope: {left: 0, top: 0, r: 0, isShow: false},
       // 塔防数据
       towerList: [
-        {money: 110, img: require("./assets/img/plant/qiezi.png")},
-        {money: 110, img: require("./assets/img/plant/pea_icon.gif")},
-        {money: 110, img: require("./assets/img/plant/pea_2_icon.gif")},
-        {money: 110, img: require("./assets/img/plant/pea_snow_icon.gif")},
-        {money: 110, img: require("./assets/img/plant/pea_3_icon.gif")},
+        {name: '茄子', money: 110, r: 300, damage: 1, img: require("./assets/img/plant/qiezi.png")},
+        {name: '单发豌豆', money: 110, r: 150, damage: 1, img: require("./assets/img/plant/pea_icon.gif")},
+        {name: '两发豌豆', money: 110, r: 200, damage: 1, img: require("./assets/img/plant/pea_2_icon.gif")},
+        {name: '寒冰豌豆', money: 110, r: 200, damage: 1, img: require("./assets/img/plant/pea_snow_icon.gif")},
+        {name: '三发豌豆', money: 110, r: 250, damage: 1, img: require("./assets/img/plant/pea_3_icon.gif")},
       ],
       towerOnloadImg: null,
-      // 场上的防御塔数组
+      // 场上的防御塔数组 {x, y, ...this.towerList[i], img: this.towerOnloadImg[i]}
       tower: []
+    }
+  },
+  computed: {
+    buildingStyle() {
+      const {left, top} = this.building
+      const size = this.gridInfo.size
+      return {left: left + size + 'px', top: top + size + 'px'}
+    },
+    buildingScopeStyle() {
+      const padding = 50
+      const size = this.gridInfo.size / 2
+      const {left, top, r} = this.buildingScope
+      return {left: left + padding + size + 'px', top: top + padding + size + 'px', width: r + 'px', height: r + 'px'}
     }
   },
   watch: {
@@ -161,6 +178,19 @@ export default {
           }
         }
       },
+    },
+    enemy: {
+      deep: true,
+      handler(list) {
+        for(let e of list) {
+          for(let t of this.tower) {
+            // 进入攻击范围，开始射击
+            if(this.checkValInCircle(e, t)) {
+              console.log('进入攻击范围，开始射击');
+            }
+          }
+        }
+      }
     }
   },
   mounted() {
@@ -187,34 +217,50 @@ export default {
       this.makeEnemy(true)
       this.startAnimation()
     },
-    /** 点击获取鼠标位置 选中建筑区 */
+    /** 点击获取鼠标位置 操作塔防 */
     getMouse(e) {
       e.stopPropagation()
-      // window.event.pageX
-      const size = this.floorTile.size
+      const size = this.gridInfo.size
       const _x = e.x - this.canvasInfo.left, _y = e.y - this.canvasInfo.top
+      // 当前点击的格子的索引值
       const col = Math.floor(_y / size), row = Math.floor(_x / size)
-      
+      const gridVal = this.gridInfo.arr[col][row]
+      const left = row * size, top = col * size
       // 已经有地板或者有建筑了
-      if(this.gridInfo.arr[col][row]) {
+      if(gridVal >= 10) {
+        this.handlerTower(left, top)
+      }
+      if(gridVal) {
         return
       }
       this.building.isShow = true
-      this.building.left = row * size
-      this.building.top = col * size
+      this.building.left = left
+      this.building.top = top
     },
     /** 点击建造塔防 */
     buildTower(index) {
       const {left: x, top: y} = this.building
       const size = this.gridInfo.size
-      const tower = {x, y, img: this.towerOnloadImg[index]}
+      const tower = {x, y, ...this.towerList[index], img: this.towerOnloadImg[index]}
       this.tower.push(tower)
-      this.gridInfo.arr[y / size][x / size] = 2
+      // 用于标记是哪个塔防 10 + index
+      this.gridInfo.arr[y / size][x / size] = 10 + index
       this.drawTower(tower)
     },
-    /** 点击背景 隐藏建筑物 */
-    bgClick() {
+    /** 点击背景 隐藏塔防 */
+    hiddenTowerOperation() {
       if(this.building.isShow) this.building.isShow = false
+      if(this.buildingScope.isShow) this.buildingScope.isShow = false
+    },
+    /** 处理塔防 */
+    handlerTower(x, y) {
+      // 当前点击的是哪个塔防
+      const tower = this.tower.find(item => item.x === x && item.y === y)
+      const {x:left, y:top, r} = tower
+      console.log(left,top);
+      // 展示攻击范围
+      this.buildingScope = {isShow: true, left, top, r}
+      // this.drawAttackScope(tower)
     },
     /** 开启动画绘画 */
     startAnimation() {
@@ -244,14 +290,14 @@ export default {
     },
     /** 画地板 */
     drawFloorTile() {
-      const size = this.floorTile.size
+      const size = this.gridInfo.size
       for(let f of this.movePath) {
         this.ctx.drawImage(this.imgOnloadObj.floorTile, f.x, f.y, size, size)
       }
     },
     /** 画塔防 */
     drawTower(item) {
-      const size = this.floorTile.size
+      const size = this.gridInfo.size
       if(item) {
         this.ctx.drawImage(item.img, item.x, item.y, size, size)
       } else {
@@ -259,6 +305,18 @@ export default {
           this.ctx.drawImage(t.img, t.x, t.y, size, size)
         }
       }
+    },
+    /** 画攻击范围 */
+    drawAttackScope(tower) {
+      if(!tower) return
+      const size_2 = this.gridInfo.size / 2
+      const {r, x, y} = tower
+      // arc (x, y, 半径, 0, 0到 2 * Math.PI 弧度, ture(逆时针))
+      // this.ctx.beginPath()
+      this.ctx.arc(x + size_2, y + size_2, r, 0, 2 * Math.PI, false)
+      this.ctx.lineWidth = 2
+      this.ctx.strokeStyle = '#282c34'
+      this.ctx.stroke()
     },
     /** 画敌人 */
     drawEnemy(index) {
@@ -283,7 +341,7 @@ export default {
         }
         return true
       }
-      const size = this.floorTile.size
+      const size = this.gridInfo.size
       // 将格子坐标同步到敌人的坐标
       const { x, y, x_y } = this.movePath[curFloorI]
       // const _y = y - (size - this.offset.y)
@@ -301,10 +359,6 @@ export default {
       if((eX >= _x &&  eX <= _x + speed) && (eY >= _y &&  eY <= _y + speed)) {
         this.enemy[index].curFloorI++
       }
-    },
-    /** 根据速度更改敌人位置 */
-    setEnemyPosition() {
-
     },
     /** 按间隔时间生成敌人 */
     makeEnemy(isInit) {
@@ -332,7 +386,6 @@ export default {
     },
     /** 生成敌人 */
     setEnemy() {
-      
       this.timeDiff.curTime = Date.now()
       this.enemy.push(this.$lodash.cloneDeep(this.enemySource[this.levelEnemy[this.enemy.length]]))
     },
@@ -348,13 +401,13 @@ export default {
       }
       this.gridInfo.arr = arr
     },
-    /** 初始化建筑物 */
+    /** 初始化塔防 */
     initBuilding() {
 
     },
     /** 初始化行动轨迹 */
     initMovePath() {
-      const size = this.floorTile.size
+      const size = this.gridInfo.size
       // 刚开始就右移了，所有该初始格不会算上去
       const movePathItem = {x: 0, y: 50, x_y: 3}
       const movePath = []
@@ -395,6 +448,16 @@ export default {
         this.canvasInfo.top = this.$refs.canvasRef.getBoundingClientRect().top;
       }, 50);
     },
+    /** 判断值是否在圆内 */
+    checkValInCircle(val, circle) {
+      const {x, y} = val
+      const {x: _x, y: _y, r} = circle
+      const size_2 = this.gridInfo.size / 2
+      if(Math.sqrt(Math.abs(Math.pow(_x + size_2 - x, 2) + Math.pow(_y + size_2 - y, 2))) <= r) {
+        return true
+      }
+      return false
+    },
     /** 单张gif转静态图片 */
     gifToStaticImg(index) {
       return new Promise((resolve, reject) => {
@@ -418,9 +481,7 @@ export default {
     },
     /** 等待所有的gif图生成静态图片 */
     async allGifToStaticImg() {
-      return Promise.all(this.enemySource.map((item, index) => this.gifToStaticImg(index))).then(res => {
-        
-      })
+      return Promise.all(this.enemySource.map((item, index) => this.gifToStaticImg(index))).then(res => {})
     },
     /** 加载图片 */
     loadImage(imgUrl, isTower) {
@@ -536,6 +597,14 @@ export default {
             }
           }
         }
+      }
+      .building-scope {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        box-sizing: border-box;
+        border: 2px solid #0b6fb6;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, .25);
       }
       .terminal {
         position: absolute;
