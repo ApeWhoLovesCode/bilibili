@@ -177,6 +177,7 @@
       </div>
     </el-backtop>
     <PlaneWar />
+    <Advertising />
   </div>
 </template>
 
@@ -187,6 +188,7 @@ import axios from "axios";
 import Card from "./common/card/Card";
 import TopList from "./common/toplist/TopList";
 import PlaneWar from "@/components/planeWar"
+import Advertising from "@/components/advertising"
 
 export default {
   name: "Home",
@@ -194,6 +196,7 @@ export default {
     Card,
     TopList,
     PlaneWar,
+    Advertising,
   },
   data() {
     return {
