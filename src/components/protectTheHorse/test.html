@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang='zh-cn'>
+<head>
+  <meta charset='UTF-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>Js</title>
+</head>
+<body>
+  <script>
+    const arr = [{x:1},{x:2},{x:3},{x:4},{x:5}]
+    for(const i in arr) {
+      // arr[i].x++
+      if(arr[i].x === 2) {
+        arr.splice(i, 1)
+      }
+    }
+    console.log(arr);
+
+    const arr2 = [{x:1},{x:2},{x:3},{x:4},{x:5}]
+    arr2.forEach((item,i) => {
+      // item.x++
+      if(item.x === 2) {
+        arr2.splice(i, 1)
+      }
+    })
+    console.log(arr2);
+  </script>
+</body>
+</html>

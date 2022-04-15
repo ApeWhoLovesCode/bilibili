@@ -66,9 +66,9 @@ export default {
       // 敌人资源 curFloorI: 当前所在格的索引, 速度有: 1，2，3，4，6，8，12，24, imgList: gif转静态图片数组
       // ∵ offset.y = 10; ∴ h + y = 90
       enemySource: [
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_1', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_2', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, type: 'zombies_1', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, type: 'zombies_2', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_3', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_4', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 5, w: 85, h: 85, curFloorI: 0, speed: 3, type: 'zombies_5', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
@@ -91,19 +91,19 @@ export default {
       building: { left: 0, top: 0, isShow: false },
       // 塔防攻击范围
       buildingScope: {left: 0, top: 0, r: 0, isShow: false},
-      // 塔防数据 name:名称, money:花费, r:攻击半径, damage:伤害, rate:攻击速率(n毫秒/次), speed:子弹速度, timer:防抖, img:塔防图片, bulletImg:子弹图片
+      // 塔防数据 name:名称, money:花费, r:攻击半径, damage:伤害, rate:攻击速率(n毫秒/次), speed:子弹速度, bSize: 子弹大小, img:塔防图片, bulletImg:子弹图片
       towerList: [
-        {name: '茄子茄子', money: 110, r: 250, damage: 1, rate: 500, timer: null, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '单发豌豆', money: 110, r: 100, damage: 1, rate: 800, timer: null, img: require("./assets/img/plant/pea_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '两发豌豆', money: 110, r: 150, damage: 1, rate: 800, timer: null, img: require("./assets/img/plant/pea_2_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '寒冰豌豆', money: 110, r: 150, damage: 1, rate: 800, timer: null, img: require("./assets/img/plant/pea_snow_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '三发豌豆', money: 110, r: 200, damage: 1, rate: 800, timer: null, img: require("./assets/img/plant/pea_3_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '茄子茄子', money: 110, r: 300, damage: 1, rate: 1000, speed: 10, bSize: {w:20,h:20}, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '单发豌豆', money: 110, r: 100, damage: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '两发豌豆', money: 110, r: 150, damage: 1, rate: 500, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_2_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '寒冰豌豆', money: 110, r: 150, damage: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_snow_icon.gif"), bulletImg: require("./assets/img/plant/bullet2.png")},
+        {name: '三发豌豆', money: 110, r: 200, damage: 1, rate: 300, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_3_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
       ],
       // 塔防加载完成图片
       towerOnloadImg: null,
       // 塔防子弹加载完成图片
       towerBulletOnloadImg: null,
-      // 场上的防御塔数组 {x, y, bulletArr(子弹数组), ...this.towerList[i], onload-img, onload-bulletImg
+      // 场上的防御塔数组 {x, y, bulletArr(子弹数组)[x,y(子弹当前位置),_x,_y(目标),addX,addY(往目标方向增加的值),xy(当前距离),x_y(目标距离)], ...this.towerList[i], onload-img, onload-bulletImg
       tower: []
     }
   },
@@ -148,20 +148,20 @@ export default {
       immediate: true,
       handler(val) {
         switch (val) {
-          case 0: {
-            const list = [0]
-            this.levelEnemy = list
-            break;
-          }
           // case 0: {
           //   const list = [0]
-          //   for(let i = 0; i < 8; i++) {
-          //     list.push(1)
-          //   }
-          //   list.push(5)
           //   this.levelEnemy = list
           //   break;
           // }
+          case 0: {
+            const list = [0]
+            for(let i = 0; i < 8; i++) {
+              list.push(1)
+            }
+            list.push(5)
+            this.levelEnemy = list
+            break;
+          }
           case 1: {
             const list = [0]
             for(let i = 0; i < 4; i++) {
@@ -189,17 +189,17 @@ export default {
     },
     enemy: {
       deep: true,
-      handler(list) {
+      handler(enemyList) {
         const tower = this.tower
-        for(let e_i in list) {
+        for(let e_i in enemyList) {
           for(let t_i in this.tower) {
             // 进入攻击范围，开始射击 
-            if(this.checkValInCircle(list[e_i], tower[t_i])) {
+            if(this.checkValInCircle(enemyList[e_i], tower[t_i])) {
               // 下步---节流立即触发
               if(tower[t_i].timer) return
               tower[t_i].timer = setInterval(() => {
-                console.log('进入攻击范围，开始射击');
-                this.isPause = true
+                this.shootBullet(enemyList[e_i], t_i)
+                // this.isPause = true
                 clearInterval(tower[t_i].timer)
                 tower[t_i].timer = null
               }, tower[t_i].rate);
@@ -279,9 +279,22 @@ export default {
       this.buildingScope = {isShow: true, left, top, r}
       // this.drawAttackScope(tower)
     },
-    /** 发射子弹 */
-    sendBullet() {
-
+    /** 发射子弹 敌人，塔index */
+    shootBullet(enemy, t_i) {
+      const {x, y, w, h} = enemy
+      // 敌人中心坐标
+      const _x = x + w / 2, _y = y + h / 2
+      const {x: t_x, y: t_y, speed } = this.tower[t_i]
+      const size_2 = this.gridInfo.size / 2
+      // 子弹初始坐标
+      const begin = {x: t_x + size_2, y: t_y + size_2}
+      // 两坐标间的差值
+      const diff = {x: _x - begin.x, y: _y - begin.y}
+      // 子弹和敌人的距离
+      const distance = this.powAndSqrt(diff.x, diff.y)
+      const addX = speed * diff.x / distance, addY = speed * diff.y / distance
+      const bullet = {x: begin.x, y: begin.y, _x, _y, addX, addY, xy: 0, x_y: distance}
+      this.tower[t_i].bulletArr.push(bullet)
     },
     /** 开启动画绘画 */
     startAnimation() {
@@ -299,6 +312,8 @@ export default {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.drawFloorTile()
       this.drawTower()
+      this.drawAndMoveBullet()
+      // 循环静态图片画敌人
       for(let index = 0; index < this.enemy.length; index++) {
         const item = this.enemy[index]
         const res = this.moveEnemy(index)
@@ -324,6 +339,24 @@ export default {
       } else {
         for(const t of this.tower) {
           this.ctx.drawImage(t.img, t.x, t.y, size, size)
+        }
+      }
+    },
+    /** 画并移动子弹 */
+    drawAndMoveBullet() {
+      for(const t of this.tower) {
+        for(const b_i in t.bulletArr) {
+          const {w, h} = t.bSize
+          const {x, y, addX, addY, x_y} = t.bulletArr[b_i]
+          this.ctx.drawImage(t.bulletImg, x - w / 2, y - h / 2, w, h)
+          t.bulletArr[b_i].x += addX
+          t.bulletArr[b_i].y += addY
+          t.bulletArr[b_i].xy += t.speed
+          // 子弹击中僵尸
+          if(t.bulletArr[b_i].xy >= x_y) {
+            console.log('子弹击中僵尸');
+            t.bulletArr.splice(b_i, 1)
+          }
         }
       }
     },
@@ -472,9 +505,9 @@ export default {
     /** 判断值是否在圆内 */
     checkValInCircle(enemy, tower) {
       const {x, y, w, h} = enemy
-      // console.log(x, y, '-', _x, _y);
+      // 
       // const distance = Math.sqrt(Math.abs(Math.pow(_x + size_2 - x, 2) + Math.pow(_y + size_2 - y, 2)))
-      // console.log('distance: ', distance);
+      // 
       const angleList = [
         this.calculateDistance(tower, x, y),
         this.calculateDistance(tower, x + w, y),
@@ -482,7 +515,7 @@ export default {
         this.calculateDistance(tower, x , y + h),
       ]
       if(angleList.some(item => item <= tower.r)) {
-        console.log('angleList: ', angleList);
+        
         return true
       }
       return false
@@ -491,7 +524,11 @@ export default {
     calculateDistance(tower, x, y) {
       const {x: _x, y: _y} = tower
       const size_2 = this.gridInfo.size / 2
-      return Math.sqrt(Math.pow(_x + size_2 - x, 2) + Math.pow(_y + size_2 - y, 2))
+      return this.powAndSqrt(_x + size_2 - x, _y + size_2 - y)
+    },
+    /** 两值平方相加并开方 求斜边 */
+    powAndSqrt(val1, val2) {
+      return Math.sqrt(Math.pow(val1, 2) + Math.pow(val2, 2))
     },
     /** 单张gif转静态图片 */
     gifToStaticImg(index) {
@@ -521,11 +558,9 @@ export default {
     /** 加载图片 imgUrl: 图片数组, objKey: 在数组中的key值  */
     loadImage(imgUrl, objKey) {
       return new Promise((resolve, reject) => {
-        var imgObj = {}; // 保存图片资源
-        var tempImg,
-          imgLength = 0,
-          loaded = 0;
-        for (var key in imgUrl) {
+        const imgObj = {}; // 保存图片资源
+        let tempImg, imgLength = 0, loaded = 0;
+        for (let key in imgUrl) {
           imgLength++; // 初始化要加载图片的总数
           tempImg = new Image();
           tempImg.src = !objKey ? imgUrl[key] : imgUrl[key][objKey];
