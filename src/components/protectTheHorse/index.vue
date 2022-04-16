@@ -50,7 +50,7 @@ export default {
       // 生命值
       hp: 10,
       // 敌人生成间隔时间
-      intervalTime: 300, 
+      intervalTime: 800, 
       // 存放上一次和本次生成的敌人时间戳，用于暂停判断还有多久产生敌人
       timeDiff: {curTime: 0, stopTime: 0},
       // 生成敌人的定时器
@@ -66,12 +66,12 @@ export default {
       // 敌人资源 curFloorI: 当前所在格的索引, 速度有: 1，2，3，4，6，8，12，24, imgList: gif转静态图片数组
       // ∵ offset.y = 10; ∴ h + y = 90
       enemySource: [
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, type: 'zombies_1', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, type: 'zombies_2', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_3', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, type: 'zombies_4', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5, w: 85, h: 85, curFloorI: 0, speed: 3, type: 'zombies_5', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, hp: {cur: 2, sum: 2, size: 8}, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_1', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_2', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_3', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_4', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, speed: 3, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_5', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
       ],
       // 最小刻度
       minScale: 2,
@@ -103,7 +103,7 @@ export default {
       towerOnloadImg: null,
       // 塔防子弹加载完成图片
       towerBulletOnloadImg: null,
-      // 场上的防御塔数组 {x, y, bulletArr(子弹数组)[x,y(子弹当前位置),_x,_y(目标),addX,addY(往目标方向增加的值),xy(当前距离),x_y(目标距离)], ...this.towerList[i], onload-img, onload-bulletImg
+      // 场上的防御塔数组 {x, y, targetIndexList(攻击的目标):[], bulletArr(子弹数组)[x,y(子弹当前位置),addX,addY(往目标方向增加的值),xy(当前距离),x_y(目标距离)], ...this.towerList[i], onload-img, onload-bulletImg
       tower: []
     }
   },
@@ -148,20 +148,20 @@ export default {
       immediate: true,
       handler(val) {
         switch (val) {
-          // case 0: {
-          //   const list = [0]
-          //   this.levelEnemy = list
-          //   break;
-          // }
           case 0: {
             const list = [0]
-            for(let i = 0; i < 8; i++) {
-              list.push(1)
-            }
-            list.push(5)
             this.levelEnemy = list
             break;
           }
+          // case 0: {
+          //   const list = [0]
+          //   for(let i = 0; i < 8; i++) {
+          //     list.push(1)
+          //   }
+          //   list.push(5)
+          //   this.levelEnemy = list
+          //   break;
+          // }
           case 1: {
             const list = [0]
             for(let i = 0; i < 4; i++) {
@@ -198,7 +198,7 @@ export default {
               // 下步---节流立即触发
               if(tower[t_i].timer) return
               tower[t_i].timer = setInterval(() => {
-                this.shootBullet(enemyList[e_i], t_i)
+                this.shootBullet(e_i, t_i)
                 // this.isPause = true
                 clearInterval(tower[t_i].timer)
                 tower[t_i].timer = null
@@ -259,7 +259,7 @@ export default {
       const {left: x, top: y} = this.building
       const size = this.gridInfo.size
       // 每一个塔防数据
-      const tower = {x, y, bulletArr: [], ...this.towerList[index], img: this.towerOnloadImg[index], bulletImg: this.towerBulletOnloadImg[index]}
+      const tower = {x, y, targetIndexList: [], bulletArr: [], ...this.towerList[index], img: this.towerOnloadImg[index], bulletImg: this.towerBulletOnloadImg[index]}
       this.tower.push(tower)
       // 用于标记是哪个塔防 10 + index
       this.gridInfo.arr[y / size][x / size] = 10 + index
@@ -279,9 +279,10 @@ export default {
       this.buildingScope = {isShow: true, left, top, r}
       // this.drawAttackScope(tower)
     },
-    /** 发射子弹 敌人，塔index */
-    shootBullet(enemy, t_i) {
-      const {x, y, w, h} = enemy
+    /** 发射子弹  enemy:敌人索引，t_i:塔索引 */
+    shootBullet(e_i, t_i) {
+      if(!this.enemy[e_i]) return
+      const {x, y, w, h} = this.enemy[e_i]
       // 敌人中心坐标
       const _x = x + w / 2, _y = y + h / 2
       const {x: t_x, y: t_y, speed } = this.tower[t_i]
@@ -295,6 +296,8 @@ export default {
       const addX = speed * diff.x / distance, addY = speed * diff.y / distance
       const bullet = {x: begin.x, y: begin.y, _x, _y, addX, addY, xy: 0, x_y: distance}
       this.tower[t_i].bulletArr.push(bullet)
+      // 添加攻击目标的索引
+      this.tower[t_i].targetIndexList = [e_i]
     },
     /** 开启动画绘画 */
     startAnimation() {
@@ -342,7 +345,7 @@ export default {
         }
       }
     },
-    /** 画并移动子弹 */
+    /** 画并处理子弹 */
     drawAndMoveBullet() {
       for(const t of this.tower) {
         for(const b_i in t.bulletArr) {
@@ -352,10 +355,18 @@ export default {
           t.bulletArr[b_i].x += addX
           t.bulletArr[b_i].y += addY
           t.bulletArr[b_i].xy += t.speed
-          // 子弹击中僵尸
+          // 子弹击中敌人
           if(t.bulletArr[b_i].xy >= x_y) {
-            console.log('子弹击中僵尸');
+            // 清除子弹
             t.bulletArr.splice(b_i, 1)
+            // 敌人扣血
+            for(const index of t.targetIndexList) {
+              this.enemy[index].hp.cur -= t.damage
+              // 消灭敌人
+              if(this.enemy[index].hp.cur <= 0) {
+                this.enemy.splice(index, 1)
+              }
+            }
           }
         }
       }
@@ -375,11 +386,25 @@ export default {
     /** 画敌人 */
     drawEnemy(index) {
       if(!this.enemy[index]) return
-      const { x, y, w, h, imgList, imgIndex } = this.enemy[index]
+      const { x, y, w, h, imgList, imgIndex, hp } = this.enemy[index]
       // this.ctx.translate(200, 0);
       // this.ctx.scale(-1, 1)
-      // 
+
       this.ctx.drawImage(imgList[imgIndex], x, y, w, h) 
+      
+      if(hp.cur === hp.sum) return
+      // 绘画生命值
+      const w_2 = w - hp.size
+      this.ctx.fillStyle = '#0066a1'
+      this.ctx.fillRect(x, y - hp.size, w_2, hp.size)
+      this.ctx.fillStyle = '#49ca00'
+      this.ctx.fillRect(x, y - hp.size,  w_2 * hp.cur / hp.sum, hp.size)
+      // 画边框
+      this.ctx.beginPath();
+      this.ctx.lineWidth = 1;
+      this.ctx.strokeStyle = "#cff1d3"; //边框颜色
+      this.ctx.rect(x, y - hp.size, w_2, hp.size);  //透明无填充
+      this.ctx.stroke();
     },
     /** 敌人移动 */
     moveEnemy(index) {
@@ -505,9 +530,6 @@ export default {
     /** 判断值是否在圆内 */
     checkValInCircle(enemy, tower) {
       const {x, y, w, h} = enemy
-      // 
-      // const distance = Math.sqrt(Math.abs(Math.pow(_x + size_2 - x, 2) + Math.pow(_y + size_2 - y, 2)))
-      // 
       const angleList = [
         this.calculateDistance(tower, x, y),
         this.calculateDistance(tower, x + w, y),
@@ -515,7 +537,6 @@ export default {
         this.calculateDistance(tower, x , y + h),
       ]
       if(angleList.some(item => item <= tower.r)) {
-        
         return true
       }
       return false
