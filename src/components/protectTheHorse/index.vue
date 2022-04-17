@@ -1,5 +1,8 @@
 <template>
   <div id="protect-horse">
+    <div class="back" @click="$router.push('/')">回到首页</div>
+    <audio ref="audioBgRef" :src="require('./assets/audio/pvz-morning.mp3')" loop></audio>
+    <audio ref="audioRef" :src="audioList[audioKey]"></audio>
     <div class="game-wrap">
       <div class="title">{{title}}</div>
       <div class="canvas-wrap" @click="hiddenTowerOperation">
@@ -12,14 +15,17 @@
             <span class="money">{{money}}</span>
           </div>
           <div class="center">
-            <span class="level fff-color">{{level}}</span> 
+            <span class="level fff-color">{{level + 1}}</span> 
             <span class="fff-color" style="margin:0 4px;">/</span>
             <span class="level2 fff-color">∞</span> 
             波僵尸
           </div>
           <div class="right">
-            <span class="icon-wrap" @click="isPause =! isPause">
+            <span class="icon-wrap" @click="gamePause()">
               <span class="iconfont" :class="isPause ? 'icon-kaishi1' : 'icon-24gf-pause2'"></span>
+            </span>
+            <span class="icon-wrap" @click="playBgAudio">
+              <span class="iconfont icon-yinle"></span>
             </span>
             <span class="icon-wrap">
               <span class="iconfont icon-xuanxiangka_fuzhi"></span>
@@ -33,18 +39,29 @@
         <div v-show="building.isShow" class="building-wrap" :style="buildingStyle">
           <img src="./assets/img/add.png" alt="" class="add-icon">
           <div class="tower-wrap" >
-            <div class="tower" v-for="(item, index) in towerList" @click="buildTower(index)">
+            <div class="tower" :class="money < item.money ? 'tower-no-money' : ''" v-for="(item, index) in towerList" @click="buildTower(index)">
               <img :src="item.img" alt="" class="tower-icon">
               <div class="info">￥{{item.money}}</div>
             </div>
           </div>
         </div>
         <!-- 塔防的攻击范围 -->
-        <div v-show="buildingScope.isShow" class="building-scope" :style="buildingScopeStyle"></div>
+        <div v-show="buildingScope.isShow" class="building-scope" :style="buildingScopeStyle">
+          <span class="sale-wrap" @click="saleTower(buildingScope.towerIndex)">
+            <span class="iconfont icon-ashbin"></span>
+            <span class="sale-num">{{tower[buildingScope.towerIndex] && tower[buildingScope.towerIndex].saleMoney}}</span>
+          </span>
+        </div>
         <!-- 终点 -->
         <div class="terminal">
           <div class="hp">{{hp}}</div>
-          <img class="terminal-icon" src="./assets/img/horse.png" alt="">
+          <img class="terminal-icon" src="./assets/img/horse1.png" alt="">
+          <img v-show="proMoney.isShow" class="money-icon" src="./assets/img/Sun.gif" alt="" @click="proMoneyClick">
+        </div>
+        <!-- 游戏结束遮罩层 -->
+        <div v-if="isGameOver || !loadingDone" class="gameover-wrap">
+          <div class="info">你为了保护大司马抵御了{{level}}波僵尸</div>
+          <div class="mask"></div>
         </div>
       </div>
     </div>
@@ -52,7 +69,13 @@
 </template>
 
 <script>
+/**
+ * 必要优化-待完成
+ * 1.子弹提前预判敌人位置
+ */
 import SuperGif from './utils/libgif'
+import levelEnemyArr from './utils/levelEnemyArr'
+
 export default {
   name: 'protect-horse',
   data() {
@@ -66,6 +89,9 @@ export default {
       canvasInfo: {left: 0, top: 0},
       // 得到 canvas 的 2d 上下文
       ctx: {},
+      loadingDone: false,
+      // 游戏结束
+      isGameOver: false,
       // 设置游戏的暂停
       isPause: true,
       // 等级
@@ -73,7 +99,9 @@ export default {
       // 生命值
       hp: 10,
       // 金钱
-      money: 100,
+      money: 500,
+      // 生产的金钱
+      proMoney: {isShow: false, timer: null, interval: 10000, money: 50},
       // 敌人生成间隔时间
       intervalTime: 800, 
       // 存放上一次和本次生成的敌人时间戳，用于暂停判断还有多久产生敌人
@@ -84,19 +112,25 @@ export default {
       pauseMakeEnemyTimer: null,
       // 当前等级需要的敌人索引
       levelEnemy: [],
+      // 已上场的敌人数量
+      createdEnemyNum: 0,
       // 场上的敌人数组  
       enemy: [],
       // 偏移量y 是用来计算敌人与地板底部的距离 (两个地板(50*2)-敌人(h(75)+y(15))) = 10
       offset: {y: 10},
-      // 敌人资源 curFloorI: 当前所在格的索引, 速度有: 1，2，3，4，6，8，12，24, imgList: gif转静态图片数组
+      // 敌人资源 curFloorI: 当前所在格的索引, imgList: gif转静态图片数组
       // ∵ offset.y = 10; ∴ h + y = 90
       enemySource: [
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, hp: {cur: 2, sum: 2, size: 8}, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_1', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_2', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_3', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 3, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_4', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, speed: 3, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_5', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 50, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 10, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_1', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'zombies_2', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 30, hp: {cur: 30, sum: 30, size: 8}, type: 'zombies_3', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, reward: 50, hp: {cur: 40, sum: 40, size: 8}, type: 'zombies_4', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, speed: 3, reward: 100, hp: {cur: 50, sum: 50, size: 8}, type: 'zombies_5', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5, w: 85, h: 85, curFloorI: 0, speed: 2, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'zombies_6', imgSource: require("./assets/img/zombies/zombies_6_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, speed: 3.5, reward: 100, hp: {cur: 40, sum: 40, size: 8}, type: 'zombies_7', imgSource: require("./assets/img/zombies/zombies_7_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5, w: 100, h: 85, curFloorI: 0, speed: 5, reward: 20, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_8', imgSource: require("./assets/img/zombies/zombies_8_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 200, hp: {cur: 100, sum: 100, size: 8}, type: 'zombies_9', imgSource: require("./assets/img/zombies/zombies_9_move.gif"), imgList: [], imgIndex: 0},
       ],
       // 最小刻度
       minScale: 2,
@@ -115,21 +149,30 @@ export default {
       // 塔防
       building: { left: 0, top: 0, isShow: false },
       // 塔防攻击范围
-      buildingScope: {left: 0, top: 0, r: 0, isShow: false},
+      buildingScope: {left: 0, top: 0, r: 0, isShow: false, towerIndex: 0},
       // 塔防数据 name:名称, money:花费, r:攻击半径, damage:伤害, rate:攻击速率(n毫秒/次), speed:子弹速度, bSize: 子弹大小, img:塔防图片, bulletImg:子弹图片
       towerList: [
-        {name: '茄子茄子', money: 110, r: 300, damage: 1, rate: 1000, speed: 10, bSize: {w:20,h:20}, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '单发豌豆', money: 110, r: 100, damage: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '两发豌豆', money: 110, r: 150, damage: 1, rate: 500, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_2_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '寒冰豌豆', money: 110, r: 150, damage: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_snow_icon.gif"), bulletImg: require("./assets/img/plant/bullet2.png")},
-        {name: '三发豌豆', money: 110, r: 200, damage: 1, rate: 300, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_3_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '茄子', money: 350, saleMoney: 200, r: 300, damage: 3, rate: 1000, speed: 12, bSize: {w:20,h:20}, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '单发豌豆', money: 100, saleMoney: 50, r: 100, damage: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '两发豌豆', money: 200, saleMoney: 100, r: 150, damage: 1, rate: 500, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_2_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '寒冰豌豆', money: 200, saleMoney: 100, r: 150, damage: 2, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_snow_icon.gif"), bulletImg: require("./assets/img/plant/bullet2.png")},
+        {name: '三发豌豆', money: 300, saleMoney: 150, r: 200, damage: 1, rate: 300, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_3_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
       ],
       // 塔防加载完成图片
       towerOnloadImg: null,
       // 塔防子弹加载完成图片
       towerBulletOnloadImg: null,
       // 场上的防御塔数组 {x, y, shootFn(防抖的射击函数), targetIndexList(攻击的目标):[], bulletArr(子弹数组)[x,y(子弹当前位置),addX,addY(往目标方向增加的值),xy(当前距离),x_y(目标距离)], ...this.towerList[i], onload-img, onload-bulletImg
-      tower: []
+      tower: [],
+      isPlayBgAudio: false,
+      // 背景音乐
+      audioKey: '',
+      audioList: {
+        'ma-qifei': require("./assets/audio/ma-qifei.mp3"),
+        'ma-nansou': require("./assets/audio/ma-nansou.wav"),
+        'qizi-wujie': require("./assets/audio/qizi-wujie.mp3"),
+      }
+      ,
     }
   },
   computed: {
@@ -146,10 +189,11 @@ export default {
     }
   },
   watch: {
-    timeDiff: {
-      deep: true,
-      handler(val) {
-        // 
+    // 游戏结束判断
+    hp(val) {
+      if(!val) {
+        this.isGameOver = true
+        this.isPause = true
       }
     },
     // 暂停的判断
@@ -160,11 +204,15 @@ export default {
           // 暂停还是有时间差的 bug
           clearTimeout(this.pauseMakeEnemyTimer)
           clearInterval(this.makeEnemyTimer)
+          clearInterval(this.proMoney.timer)
+          // const stopTime = new Date()
+          // console.log('暂停:', stopTime.getMinutes(), stopTime.getSeconds());
+          // this.timeDiff.stopTime = stopTime.getTime()
           this.timeDiff.stopTime = Date.now()
-          // 
         } else {
           this.makeEnemy()
           this.startAnimation();
+          this.startMoneyTimer()
         }
       }
     },
@@ -172,63 +220,36 @@ export default {
     level: {
       immediate: true,
       handler(val) {
-        switch (val) {
-          case 0: {
+        setTimeout(() => {
+          this.createdEnemyNum = 0
+          if(val < levelEnemyArr.length) {
+            this.levelEnemy = levelEnemyArr[val]
+          } else {
             const list = [0]
-            this.levelEnemy = list
-            break;
-          }
-          // case 0: {
-          //   const list = [0]
-          //   for(let i = 0; i < 8; i++) {
-          //     list.push(1)
-          //   }
-          //   list.push(5)
-          //   this.levelEnemy = list
-          //   break;
-          // }
-          case 1: {
-            const list = [0]
-            for(let i = 0; i < 4; i++) {
-              list.push(2)
-            }
-            for(let i = 0; i < 5; i++) {
-              list.push(3)
+            for(let i = 0; i < val; i++) {
+              list.push(9)
             }
             this.levelEnemy = list
-            break;
           }
-          case 2: {
-            const list = [0]
-            for(let i = 0; i < 5; i++) {
-              list.push(4)
-            }
-            for(let i = 0; i < 5; i++) {
-              list.push(5)
-            }
-            this.levelEnemy = list
-            break;
-          }
-        }
+          if(val) this.makeEnemy()
+        }, val ? 500 : 0);
       },
     },
     enemy: {
       deep: true,
       handler(enemyList) {
+        // 敌人已经清空
+        if(!enemyList.length && this.hp) {
+          this.timeDiff.curTime = 0
+          this.timeDiff.stopTime = 0
+          this.level++
+        }
         const tower = this.tower
         for(let e_i in enemyList) {
           for(let t_i in this.tower) {
             // 进入攻击范围，开始射击 
             if(this.checkValInCircle(enemyList[e_i], tower[t_i])) {
-              // 下步---节流立即触发
               tower[t_i].shootFun(e_i, t_i)
-              // if(tower[t_i].timer) return
-              // tower[t_i].timer = setInterval(() => {
-              //   this.shootBullet(e_i, t_i)
-              //   // this.isPause = true
-              //   clearInterval(tower[t_i].timer)
-              //   tower[t_i].timer = null
-              // }, tower[t_i].rate);
             }
           }
         }
@@ -238,6 +259,7 @@ export default {
   mounted() {
     this.init();
     this.getCanvasMargin()
+    this.$message({type: 'success', message: '点击右上方按钮或按空格键开始游戏', duration: 2500, showClose: true})
     // 监听浏览器窗口大小变化
     window.addEventListener("resize", this.getCanvasMargin);
   },
@@ -249,7 +271,6 @@ export default {
       this.canvas = this.$refs.canvasRef;
       this.ctx = this.canvas.getContext("2d");
       this.initAllGrid()
-      this.initBuilding()
       this.initMovePath()
       this.onKeyDown()
       await this.allGifToStaticImg()
@@ -257,7 +278,7 @@ export default {
       this.imgOnloadObj = await this.loadImage(this.imgObj);
       this.towerOnloadImg = await this.loadImage(this.towerList, 'img');
       this.towerBulletOnloadImg = await this.loadImage(this.towerList, 'bulletImg');
-      this.makeEnemy(true)
+      // this.makeEnemy(true)
       this.startAnimation()
     },
     /** 点击获取鼠标位置 操作塔防 */
@@ -282,19 +303,30 @@ export default {
     },
     /** 点击建造塔防 */
     buildTower(index) {
+      const { rate, money } = this.towerList[index]
+      if(this.money < money) return
+      this.money -= money
       const {left: x, top: y} = this.building
       const size = this.gridInfo.size
-      // 将该塔防塔防数据放入场上塔防数组中
+      // 将该塔防数据放入场上塔防数组中
       // 射击的防抖函数
       const shootFun = this.$lodash.throttle((e_i, t_i) => {
-        console.log('进入攻击范围，开始射击');
         this.shootBullet(e_i, t_i)
-      }, this.towerList[index].rate, { leading: true, trailing: false })
+      }, rate, { leading: true, trailing: false })
       const tower = {x, y, shootFun, targetIndexList: [], bulletArr: [], ...this.towerList[index], img: this.towerOnloadImg[index], bulletImg: this.towerBulletOnloadImg[index]}
       this.tower.push(tower)
       // 用于标记是哪个塔防 10 + index
       this.gridInfo.arr[y / size][x / size] = 10 + index
       this.drawTower(tower)
+    },
+    /** 售卖防御塔 */
+    saleTower(index) {
+      const size = this.gridInfo.size
+      const {x, y, saleMoney} = this.tower[index]
+      this.ctx.clearRect(x, y, size, size);
+      this.gridInfo.arr[y / size][x / size] = 0
+      this.money += saleMoney
+      this.tower.splice(index, 1)
     },
     /** 点击背景 隐藏塔防 */
     hiddenTowerOperation() {
@@ -304,10 +336,10 @@ export default {
     /** 处理塔防 */
     handlerTower(x, y) {
       // 当前点击的是哪个塔防
-      const tower = this.tower.find(item => item.x === x && item.y === y)
-      const {x:left, y:top, r} = tower
+      const towerIndex = this.tower.findIndex(item => item.x === x && item.y === y)
+      const {x:left, y:top, r} = this.tower[towerIndex]
       // 展示攻击范围
-      this.buildingScope = {isShow: true, left, top, r}
+      this.buildingScope = {isShow: true, left, top, r, towerIndex}
       // this.drawAttackScope(tower)
     },
     /** 发射子弹  enemy:敌人索引，t_i:塔索引 */
@@ -392,10 +424,16 @@ export default {
             t.bulletArr.splice(b_i, 1)
             // 敌人扣血
             for(const index of t.targetIndexList) {
-              this.enemy[index].hp.cur -= t.damage
-              // 消灭敌人
-              if(this.enemy[index].hp.cur <= 0) {
-                this.enemy.splice(index, 1)
+              if(this.enemy[index]) {
+                this.enemy[index].hp.cur -= t.damage
+                // 消灭敌人
+                if(this.enemy[index].hp.cur <= 0) {
+                  this.money += this.enemy[index].reward
+                  this.enemy.splice(index, 1)
+                  if(t.name === '茄子') {
+                    this.playAudio('qizi-wujie')
+                  }
+                }
               }
             }
           }
@@ -420,7 +458,6 @@ export default {
       const { x, y, w, h, imgList, imgIndex, hp } = this.enemy[index]
       // this.ctx.translate(200, 0);
       // this.ctx.scale(-1, 1)
-
       this.ctx.drawImage(imgList[imgIndex], x, y, w, h) 
       
       if(hp.cur === hp.sum) return
@@ -443,12 +480,8 @@ export default {
       // 敌人到达终点
       if(curFloorI === this.floorTile.num - 1) {
         this.enemy.splice(index, 1)
-        // 最后一只怪物消失了
-        if(index === 0 && this.enemy.length === 1) {
-          this.level++
-          this.parse = true
-          this.makeEnemy()
-        }
+        this.hp -= 1
+        this.playAudio('ma-nansou')
         return true
       }
       const size = this.gridInfo.size
@@ -471,22 +504,15 @@ export default {
       }
     },
     /** 按间隔时间生成敌人 */
-    makeEnemy(isInit) {
+    makeEnemy() {
       // 当前关卡敌人已经全部上场
-      if(this.enemy.length === this.levelEnemy.length) return
-      // 刚开始生成了一个敌人 然后因为是暂停，所以会清除定时器
-      if(isInit) {
-        this.timeDiff.stopTime = Date.now()
-        this.setEnemy()
-        return
-      }
+      if(this.createdEnemyNum === this.levelEnemy.length) return
       // 暂停回来，间隔时间修改
       const time = this.intervalTime - (this.timeDiff.stopTime - this.timeDiff.curTime)
-      // 
       this.pauseMakeEnemyTimer = setTimeout(() => {
         this.setEnemy()
         this.makeEnemyTimer = setInterval(() => {
-          if(this.enemy.length === this.levelEnemy.length || this.isPause) {
+          if(this.createdEnemyNum === this.levelEnemy.length || this.isPause) {
             clearInterval(this.makeEnemyTimer)
           } else {
             this.setEnemy()
@@ -496,8 +522,11 @@ export default {
     },
     /** 生成敌人 */
     setEnemy() {
+      // const stopTime = new Date()
+      // console.log('敌人:', stopTime.getMinutes(), stopTime.getSeconds());
       this.timeDiff.curTime = Date.now()
-      this.enemy.push(this.$lodash.cloneDeep(this.enemySource[this.levelEnemy[this.enemy.length]]))
+      this.enemy.push(this.$lodash.cloneDeep(this.enemySource[this.levelEnemy[this.createdEnemyNum]]))
+      this.createdEnemyNum++
     },
     /** 初始化所有格子 */
     initAllGrid() {
@@ -510,10 +539,6 @@ export default {
         }
       }
       this.gridInfo.arr = arr
-    },
-    /** 初始化塔防 */
-    initBuilding() {
-
     },
     /** 初始化行动轨迹 */
     initMovePath() {
@@ -550,6 +575,18 @@ export default {
       }
       this.movePath = movePath
     },
+    /** 开启创建金钱定时器 */
+    startMoneyTimer() {
+      this.proMoney.timer = setInterval(() => {
+        if(!this.proMoney.isShow) this.proMoney.isShow = true
+        this.playAudio('ma-qifei')
+      }, this.proMoney.interval);
+    },
+    /** 点击了生产出来的金钱 */
+    proMoneyClick() {
+      this.proMoney.isShow = false
+      this.money += this.proMoney.money
+    },
     /** 获取canvas与浏览器 左边 / 顶部 的距离 */
     getCanvasMargin() {
       clearTimeout(this.resizeTimer)
@@ -582,6 +619,19 @@ export default {
     powAndSqrt(val1, val2) {
       return Math.sqrt(Math.pow(val1, 2) + Math.pow(val2, 2))
     },
+    /** 播放背景音乐 */
+    playBgAudio() {
+      this.isPlayBgAudio = !this.isPlayBgAudio
+      if(this.isPlayBgAudio) this.$refs.audioBgRef.play()
+      else this.$refs.audioBgRef.pause()
+    },
+    /** 播放音乐 */
+    playAudio(audioKey) {
+      if(this.audioKey !== audioKey) {
+        this.audioKey = audioKey
+      }
+      this.$nextTick(()=>{this.$refs.audioRef.play()})
+    },
     /** 单张gif转静态图片 */
     gifToStaticImg(index) {
       return new Promise((resolve, reject) => {
@@ -605,7 +655,9 @@ export default {
     },
     /** 等待所有的gif图生成静态图片 */
     async allGifToStaticImg() {
-      return Promise.all(this.enemySource.map((item, index) => this.gifToStaticImg(index))).then(res => {})
+      return Promise.all(this.enemySource.map((item, index) => this.gifToStaticImg(index))).then(res => {
+        this.loadingDone = true
+      })
     },
     /** 加载图片 imgUrl: 图片数组, objKey: 在数组中的key值  */
     loadImage(imgUrl, objKey) {
@@ -631,10 +683,19 @@ export default {
     onKeyDown() {
       document.onkeydown = (e) => {
         switch (e.code) {
-          case "Space": this.isPause = !this.isPause; break;
+          case "Space":{
+            this.gamePause()
+            break;
+          } 
         }
       };
     },
+    /** 游戏暂停 */
+    gamePause() {
+      if(!this.isGameOver) {
+        this.isPause = !this.isPause;
+      }
+    }
   }
 }
 </script>
@@ -651,6 +712,20 @@ export default {
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  .back {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    color: #fff;
+    background: rgba(255, 255, 255, .3);
+    padding: 4px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    &:hover {
+      opacity: .8;
+    }
+  }
   .game-wrap {
     position: relative;
     display: inline-block;
@@ -678,6 +753,7 @@ export default {
       padding: 50px 50px 30px;
       background-image: radial-gradient(circle 500px at center, #16d9e3 0%, #30c7ec 47%, #46aef7 100%);
       border-radius: 4px;
+      overflow: hidden;
       .info-wrap {
         position: absolute;
         top: 0;
@@ -692,6 +768,7 @@ export default {
         border-bottom-right-radius: 12px;
         padding: 0 20px;
         box-shadow: -7px 4px 14px #1781c2;
+        user-select: none;
         .left {
           .icon-wrap {
             display: inline-block;
@@ -752,6 +829,7 @@ export default {
             border-radius: 50px;
             background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
             margin-right: 20px;
+            cursor: pointer;
             &:last-child {
               margin-right: 0;
             }
@@ -801,7 +879,11 @@ export default {
               text-align: center;
               font-size: 14px;
               color: #fff;
+              background: rgba(0, 0, 0, .35);
             }
+          }
+          .tower-no-money {
+            opacity: .3;
           }
         }
       }
@@ -812,10 +894,34 @@ export default {
         border: 2px solid #3b9bdf;
         border-radius: 50%;
         background: rgba(255, 255, 255, .25);
+        .sale-wrap {
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          // background: rgba(255, 255, 255, 0.4);
+          background: #3b9bdf;
+          color: #fff;
+          border-radius: 8px;
+          padding: 0 5px;
+          cursor: pointer;
+          &:hover {
+            opacity: .75;
+          }
+          .iconfont {
+            font-size: 20px;
+          }
+          .sale-num {
+            font-size: 14px;
+          }
+        }
       }
       .terminal {
         position: absolute;
-        left: 20px;
+        left: 40px;
         top: 45%;
         transform: translateY(-50%);
         user-select: none;
@@ -826,7 +932,28 @@ export default {
           text-align: center;
         }
         .terminal-icon {
-          width: 60px;
+          width: 150px;
+        }
+        .money-icon {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 80px;
+          height: 80px;
+        }
+      }
+      .gameover-wrap {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, .4);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        .info {
+          color: #fff;
         }
       }
     }
