@@ -22,14 +22,14 @@ const routes = [
   },
   {
     path: '/search', component: Search, meta: {
-      title: "ViliVili",
+      title: "ViliVili--搜素",
       name: "referrer",
       content: "no-referrer"
     }
   },
   {
     path: '/protectTheHorse', component: ProtectTheHorse, meta: {
-      title: "protectTheHorse",
+      title: "保卫大司马",
       name: "referrer",
       content: "no-referrer"
     }

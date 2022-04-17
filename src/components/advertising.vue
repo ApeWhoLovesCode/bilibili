@@ -1,6 +1,6 @@
 <template>
   <div v-if="isShow" class="com-advertising" @click="$router.push('/protectTheHorse')">
-    <img class="bg" src="@/assets/img/horse.png" alt="">
+    <img class="bg" src="@/components/protectTheHorse/assets/img/horse1.png" alt="">
     <i class="iconfont icon-close" @click="close"></i>
   </div>
 </template>
@@ -27,7 +27,7 @@ export default {
   bottom: 0;
   right: 0;
   .bg {
-    width: 100px;
+    height: 100px;
   }
   .iconfont {
     position: absolute;

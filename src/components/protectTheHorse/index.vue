@@ -80,7 +80,7 @@ export default {
   name: 'protect-horse',
   data() {
     return {
-      title: 'game',
+      title: '保卫大司马',
       // 浏览器大小变化
       resizeTimer: null,
       // canvas 对象
@@ -101,7 +101,7 @@ export default {
       // 金钱
       money: 500,
       // 生产的金钱
-      proMoney: {isShow: false, timer: null, interval: 10000, money: 50},
+      proMoney: {isShow: false, timer: null, interval: 10000, money: 25},
       // 敌人生成间隔时间
       intervalTime: 800, 
       // 存放上一次和本次生成的敌人时间戳，用于暂停判断还有多久产生敌人
@@ -121,16 +121,17 @@ export default {
       // 敌人资源 curFloorI: 当前所在格的索引, imgList: gif转静态图片数组
       // ∵ offset.y = 10; ∴ h + y = 90
       enemySource: [
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 50, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_0', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 10, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_1', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'zombies_2', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 30, hp: {cur: 30, sum: 30, size: 8}, type: 'zombies_3', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, reward: 50, hp: {cur: 40, sum: 40, size: 8}, type: 'zombies_4', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, speed: 3, reward: 100, hp: {cur: 50, sum: 50, size: 8}, type: 'zombies_5', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5, w: 85, h: 85, curFloorI: 0, speed: 2, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'zombies_6', imgSource: require("./assets/img/zombies/zombies_6_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, speed: 3.5, reward: 100, hp: {cur: 40, sum: 40, size: 8}, type: 'zombies_7', imgSource: require("./assets/img/zombies/zombies_7_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5, w: 100, h: 85, curFloorI: 0, speed: 5, reward: 20, hp: {cur: 10, sum: 10, size: 8}, type: 'zombies_8', imgSource: require("./assets/img/zombies/zombies_8_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 200, hp: {cur: 100, sum: 100, size: 8}, type: 'zombies_9', imgSource: require("./assets/img/zombies/zombies_9_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 50, hp: {cur: 10, sum: 10, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 10, hp: {cur: 10, sum: 10, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 30, hp: {cur: 30, sum: 30, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, reward: 50, hp: {cur: 50, sum: 50, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, speed: 3, reward: 100, hp: {cur: 80, sum: 80, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5, w: 85, h: 85, curFloorI: 0, speed: 3, reward: -100, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_6_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, speed: 3.5, reward: 100, hp: {cur: 50, sum: 50, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_7_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5, w: 100, h: 85, curFloorI: 0, speed: 5, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_8_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 200, hp: {cur: 200, sum: 200, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_9_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 200, hp: {cur: 500, sum: 500, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/fulisha.png"), imgList: [], imgIndex: 0},
       ],
       // 最小刻度
       minScale: 2,
@@ -222,12 +223,16 @@ export default {
       handler(val) {
         setTimeout(() => {
           this.createdEnemyNum = 0
+          this.money += this.proMoney.money * (this.level + 1)
           if(val < levelEnemyArr.length) {
             this.levelEnemy = levelEnemyArr[val]
           } else {
             const list = [0]
-            for(let i = 0; i < val; i++) {
+            for(let i = 0; i < val / 2; i++) {
               list.push(9)
+            }
+            for(let i = 0; i < val / 2; i++) {
+              list.push(10)
             }
             this.levelEnemy = list
           }
@@ -635,8 +640,15 @@ export default {
     /** 单张gif转静态图片 */
     gifToStaticImg(index) {
       return new Promise((resolve, reject) => {
+        const {type, imgSource} = this.enemySource[index]
+        if(type !== 'gif') {
+          const newImg = new Image();
+          newImg.src = imgSource
+          this.enemySource[index].imgList = [newImg]
+          resolve()
+        }
         const gifImg = document.createElement('img');
-        gifImg.src = this.enemySource[index].imgSource
+        gifImg.src = imgSource
         // gifImg.style.transform = 'rotate(90deg)';
         // 创建gif实例
         const rub = new SuperGif({ gif: gifImg } );
@@ -738,14 +750,14 @@ export default {
     border-radius: 8px;
     .title {
       position: absolute;
-      top: -50px;
+      top: -45px;
       left: 0;
       right: 0;
       font-size: 24px;
       font-weight: bold;
       height: 30px;
       line-height: 30px;
-      color: #ccc;
+      color: #eee;
       text-align: center;
     }
     .canvas-wrap {
