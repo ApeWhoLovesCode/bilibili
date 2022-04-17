@@ -3,6 +3,29 @@
     <div class="game-wrap">
       <div class="title">{{title}}</div>
       <div class="canvas-wrap" @click="hiddenTowerOperation">
+        <!-- 游戏顶部信息展示区域 -->
+        <div class="info-wrap">
+          <div class="left">
+            <span class="icon-wrap">
+              <span class="iconfont icon-jinbi1"></span>
+            </span>
+            <span class="money">{{money}}</span>
+          </div>
+          <div class="center">
+            <span class="level fff-color">{{level}}</span> 
+            <span class="fff-color" style="margin:0 4px;">/</span>
+            <span class="level2 fff-color">∞</span> 
+            波僵尸
+          </div>
+          <div class="right">
+            <span class="icon-wrap" @click="isPause =! isPause">
+              <span class="iconfont" :class="isPause ? 'icon-kaishi1' : 'icon-24gf-pause2'"></span>
+            </span>
+            <span class="icon-wrap">
+              <span class="iconfont icon-xuanxiangka_fuzhi"></span>
+            </span>
+          </div>
+        </div>
         <!-- 游戏区域 -->
         <canvas ref="canvasRef" id="mycanvas" width="1050" height="600" @click="getMouse($event)"></canvas>
         <!-- 塔防的容器 -->
@@ -49,6 +72,8 @@ export default {
       level: 0,
       // 生命值
       hp: 10,
+      // 金钱
+      money: 100,
       // 敌人生成间隔时间
       intervalTime: 800, 
       // 存放上一次和本次生成的敌人时间戳，用于暂停判断还有多久产生敌人
@@ -103,7 +128,7 @@ export default {
       towerOnloadImg: null,
       // 塔防子弹加载完成图片
       towerBulletOnloadImg: null,
-      // 场上的防御塔数组 {x, y, targetIndexList(攻击的目标):[], bulletArr(子弹数组)[x,y(子弹当前位置),addX,addY(往目标方向增加的值),xy(当前距离),x_y(目标距离)], ...this.towerList[i], onload-img, onload-bulletImg
+      // 场上的防御塔数组 {x, y, shootFn(防抖的射击函数), targetIndexList(攻击的目标):[], bulletArr(子弹数组)[x,y(子弹当前位置),addX,addY(往目标方向增加的值),xy(当前距离),x_y(目标距离)], ...this.towerList[i], onload-img, onload-bulletImg
       tower: []
     }
   },
@@ -196,13 +221,14 @@ export default {
             // 进入攻击范围，开始射击 
             if(this.checkValInCircle(enemyList[e_i], tower[t_i])) {
               // 下步---节流立即触发
-              if(tower[t_i].timer) return
-              tower[t_i].timer = setInterval(() => {
-                this.shootBullet(e_i, t_i)
-                // this.isPause = true
-                clearInterval(tower[t_i].timer)
-                tower[t_i].timer = null
-              }, tower[t_i].rate);
+              tower[t_i].shootFun(e_i, t_i)
+              // if(tower[t_i].timer) return
+              // tower[t_i].timer = setInterval(() => {
+              //   this.shootBullet(e_i, t_i)
+              //   // this.isPause = true
+              //   clearInterval(tower[t_i].timer)
+              //   tower[t_i].timer = null
+              // }, tower[t_i].rate);
             }
           }
         }
@@ -258,8 +284,13 @@ export default {
     buildTower(index) {
       const {left: x, top: y} = this.building
       const size = this.gridInfo.size
-      // 每一个塔防数据
-      const tower = {x, y, targetIndexList: [], bulletArr: [], ...this.towerList[index], img: this.towerOnloadImg[index], bulletImg: this.towerBulletOnloadImg[index]}
+      // 将该塔防塔防数据放入场上塔防数组中
+      // 射击的防抖函数
+      const shootFun = this.$lodash.throttle((e_i, t_i) => {
+        console.log('进入攻击范围，开始射击');
+        this.shootBullet(e_i, t_i)
+      }, this.towerList[index].rate, { leading: true, trailing: false })
+      const tower = {x, y, shootFun, targetIndexList: [], bulletArr: [], ...this.towerList[index], img: this.towerOnloadImg[index], bulletImg: this.towerBulletOnloadImg[index]}
       this.tower.push(tower)
       // 用于标记是哪个塔防 10 + index
       this.gridInfo.arr[y / size][x / size] = 10 + index
@@ -610,6 +641,7 @@ export default {
 
 <style lang="less" scoped>
 @size: 50px; 
+@fontColor: #5bb3e5;
 #protect-horse {
   box-sizing: border-box;
   width: 100vw;
@@ -646,6 +678,90 @@ export default {
       padding: 50px 50px 30px;
       background-image: radial-gradient(circle 500px at center, #16d9e3 0%, #30c7ec 47%, #46aef7 100%);
       border-radius: 4px;
+      .info-wrap {
+        position: absolute;
+        top: 0;
+        left: 30px;
+        right: 30px;
+        height: 45px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #d2f5fa;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+        padding: 0 20px;
+        box-shadow: -7px 4px 14px #1781c2;
+        .left {
+          .icon-wrap {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            background: linear-gradient(to left top, #fffc00, #fefdee);
+            border-radius: 50px;
+            border: 1px solid #d8b356;
+            .iconfont {
+              font-size: 16px;
+              color: #c87a1a;
+            }
+          }
+          .money {
+            margin-left: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: @fontColor;
+          }
+        }
+        .center {
+          box-sizing: border-box;
+          display: inline-block;
+          width: 200px;
+          height: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 16px;
+          font-weight: bold;
+          color: @fontColor;
+          background: #1781c2;
+          border-radius: 40px;
+          border: 4px solid @fontColor;
+          box-shadow: -7px 4px 14px #1781c2,
+           inset 3px 4px 6px #082a74;
+          .fff-color {
+            color: #fff;
+          }
+          .level {
+            font-size: 16px;
+          }
+          .level2 {
+            font-size: 24px;
+            line-height: 24px;
+            margin-right: 8px;
+          }
+        } 
+        .right {
+          .icon-wrap {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50px;
+            background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            margin-right: 20px;
+            &:last-child {
+              margin-right: 0;
+            }
+            .iconfont {
+              font-size: 16px;
+              color: #fff;
+            }
+          }
+        }
+      }
       .building-wrap {
         position: absolute;
         user-select: none;
