@@ -228,10 +228,7 @@ export default {
             this.levelEnemy = levelEnemyArr[val]
           } else {
             const list = [0]
-            for(let i = 0; i < val / 2; i++) {
-              list.push(9)
-            }
-            for(let i = 0; i < val / 2; i++) {
+            for(let i = 0; i < val; i++) {
               list.push(10)
             }
             this.levelEnemy = list
@@ -444,6 +441,10 @@ export default {
           }
         }
       }
+    },
+    /** 返回子弹需要移动的xy值 */
+    bulletMoveXY() {
+
     },
     /** 画攻击范围 */
     drawAttackScope(tower) {
