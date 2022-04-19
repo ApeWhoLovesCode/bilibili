@@ -130,8 +130,9 @@ export default {
         {x: 0, y: 5, w: 85, h: 85, curFloorI: 0, speed: 3, reward: -100, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_6_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, speed: 3.5, reward: 100, hp: {cur: 50, sum: 50, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_7_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 5, w: 100, h: 85, curFloorI: 0, speed: 5, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_8_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 200, hp: {cur: 200, sum: 200, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_9_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 200, hp: {cur: 500, sum: 500, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/fulisha.png"), imgList: [], imgIndex: 0},
+        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 150, hp: {cur: 200, sum: 200, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_9_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 200, hp: {cur: 500, sum: 500, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/afu.png"), imgList: [], imgIndex: 0},
+        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 300, hp: {cur: 1000, sum: 1000, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/fulisha.png"), imgList: [], imgIndex: 0},
       ],
       // 最小刻度
       minScale: 2,
@@ -151,13 +152,13 @@ export default {
       building: { left: 0, top: 0, isShow: false },
       // 塔防攻击范围
       buildingScope: {left: 0, top: 0, r: 0, isShow: false, towerIndex: 0},
-      // 塔防数据 name:名称, money:花费, r:攻击半径, damage:伤害, rate:攻击速率(n毫秒/次), speed:子弹速度, bSize: 子弹大小, img:塔防图片, bulletImg:子弹图片
+      // 塔防数据 name:名称, money:花费, r:攻击半径, damage:伤害, targetNum:攻击目标数量, rate:攻击速率(n毫秒/次), speed:子弹速度, bSize: 子弹大小, img:塔防图片, bulletImg:子弹图片
       towerList: [
-        {name: '茄子', money: 350, saleMoney: 200, r: 300, damage: 3, rate: 1000, speed: 12, bSize: {w:20,h:20}, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '单发豌豆', money: 100, saleMoney: 50, r: 100, damage: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '两发豌豆', money: 200, saleMoney: 100, r: 150, damage: 1, rate: 500, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_2_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '寒冰豌豆', money: 200, saleMoney: 100, r: 150, damage: 2, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_snow_icon.gif"), bulletImg: require("./assets/img/plant/bullet2.png")},
-        {name: '三发豌豆', money: 300, saleMoney: 150, r: 200, damage: 1, rate: 300, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_3_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '茄子', money: 400, saleMoney: 200, r: 300, damage: 3,     targetNum: 1, rate: 1000, speed: 12, bSize: {w:20,h:20}, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '单发豌豆', money: 100, saleMoney: 50, r: 100, damage: 1,  targetNum: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '两发豌豆', money: 200, saleMoney: 100, r: 150, damage: 1, targetNum: 2, rate: 600, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_2_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '寒冰豌豆', money: 200, saleMoney: 100, r: 150, damage: 2, targetNum: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_snow_icon.gif"), bulletImg: require("./assets/img/plant/bullet2.png")},
+        {name: '三发豌豆', money: 300, saleMoney: 150, r: 200, damage: 1, targetNum: 3, rate: 900, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_3_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
       ],
       // 塔防加载完成图片
       towerOnloadImg: null,
@@ -229,7 +230,7 @@ export default {
           } else {
             const list = [0]
             for(let i = 0; i < val; i++) {
-              list.push(10)
+              list.push(11)
             }
             this.levelEnemy = list
           }
@@ -247,12 +248,11 @@ export default {
           this.level++
         }
         const tower = this.tower
-        for(let e_i in enemyList) {
-          for(let t_i in this.tower) {
-            // 进入攻击范围，开始射击 
-            if(this.checkValInCircle(enemyList[e_i], tower[t_i])) {
-              tower[t_i].shootFun(e_i, t_i)
-            }
+        for(let t_i in tower) {
+          const eIndexlist = this.enterAttackScopeList(enemyList, tower[t_i])
+          // 进入攻击范围，开始射击 
+          if(eIndexlist.length) {
+            tower[t_i].shootFun(eIndexlist.splice(0, tower[t_i].targetNum), t_i)
           }
         }
       }
@@ -312,8 +312,8 @@ export default {
       const size = this.gridInfo.size
       // 将该塔防数据放入场上塔防数组中
       // 射击的防抖函数
-      const shootFun = this.$lodash.throttle((e_i, t_i) => {
-        this.shootBullet(e_i, t_i)
+      const shootFun = this.$lodash.throttle((eIndexlist, t_i) => {
+        this.shootBullet(eIndexlist, t_i)
       }, rate, { leading: true, trailing: false })
       const tower = {x, y, shootFun, targetIndexList: [], bulletArr: [], ...this.towerList[index], img: this.towerOnloadImg[index], bulletImg: this.towerBulletOnloadImg[index]}
       this.tower.push(tower)
@@ -344,25 +344,27 @@ export default {
       this.buildingScope = {isShow: true, left, top, r, towerIndex}
       // this.drawAttackScope(tower)
     },
-    /** 发射子弹  enemy:敌人索引，t_i:塔索引 */
-    shootBullet(e_i, t_i) {
-      if(!this.enemy[e_i]) return
-      const {x, y, w, h} = this.enemy[e_i]
-      // 敌人中心坐标
-      const _x = x + w / 2, _y = y + h / 2
-      const {x: t_x, y: t_y, speed } = this.tower[t_i]
-      const size_2 = this.gridInfo.size / 2
-      // 子弹初始坐标
-      const begin = {x: t_x + size_2, y: t_y + size_2}
-      // 两坐标间的差值
-      const diff = {x: _x - begin.x, y: _y - begin.y}
-      // 子弹和敌人的距离
-      const distance = this.powAndSqrt(diff.x, diff.y)
-      const addX = speed * diff.x / distance, addY = speed * diff.y / distance
-      const bullet = {x: begin.x, y: begin.y, _x, _y, addX, addY, xy: 0, x_y: distance}
-      this.tower[t_i].bulletArr.push(bullet)
+    /** 发射子弹  enemy:敌人索引数组，t_i:塔索引 */
+    shootBullet(eIndexlist, t_i) {
       // 添加攻击目标的索引
-      this.tower[t_i].targetIndexList = [e_i]
+      this.tower[t_i].targetIndexList = eIndexlist
+      for(const e_i in eIndexlist) {
+        if(!this.enemy[e_i]) break
+        const {x, y, w, h} = this.enemy[e_i]
+        // 敌人中心坐标
+        const _x = x + w / 2, _y = y + h / 2
+        const {x: t_x, y: t_y, speed } = this.tower[t_i]
+        const size_2 = this.gridInfo.size / 2
+        // 子弹初始坐标
+        const begin = {x: t_x + size_2, y: t_y + size_2}
+        // 两坐标间的差值
+        const diff = {x: _x - begin.x, y: _y - begin.y}
+        // 子弹和敌人的距离
+        const distance = this.powAndSqrt(diff.x, diff.y)
+        const addX = speed * diff.x / distance, addY = speed * diff.y / distance
+        const bullet = {x: begin.x, y: begin.y, _x, _y, addX, addY, xy: 0, x_y: distance}
+        this.tower[t_i].bulletArr.push(bullet)
+      }
     },
     /** 开启动画绘画 */
     startAnimation() {
@@ -425,13 +427,15 @@ export default {
             // 清除子弹
             t.bulletArr.splice(b_i, 1)
             // 敌人扣血
-            for(const index of t.targetIndexList) {
-              if(this.enemy[index]) {
-                this.enemy[index].hp.cur -= t.damage
+            for(const index in t.targetIndexList) {
+              const e_i = t.targetIndexList[index]
+              if(this.enemy[e_i]) {
+                this.enemy[e_i].hp.cur -= t.damage
                 // 消灭敌人
-                if(this.enemy[index].hp.cur <= 0) {
-                  this.money += this.enemy[index].reward
-                  this.enemy.splice(index, 1)
+                if(this.enemy[e_i].hp.cur <= 0) {
+                  this.money += this.enemy[e_i].reward
+                  this.enemy.splice(e_i, 1)
+                  t.targetIndexList.splice(index, 1)
                   if(t.name === '茄子') {
                     this.playAudio('qizi-wujie')
                   }
@@ -584,8 +588,10 @@ export default {
     /** 开启创建金钱定时器 */
     startMoneyTimer() {
       this.proMoney.timer = setInterval(() => {
-        if(!this.proMoney.isShow) this.proMoney.isShow = true
-        this.playAudio('ma-qifei')
+        if(!this.proMoney.isShow) {
+          this.proMoney.isShow = true
+          this.playAudio('ma-qifei')
+        }
       }, this.proMoney.interval);
     },
     /** 点击了生产出来的金钱 */
@@ -600,6 +606,15 @@ export default {
         this.canvasInfo.left = this.$refs.canvasRef.getBoundingClientRect().left;
         this.canvasInfo.top = this.$refs.canvasRef.getBoundingClientRect().top;
       }, 50);
+    },
+    /** 返回进入攻击范围的值的数组 */
+    enterAttackScopeList(enemyList, tower) {
+      return enemyList.reduce((pre, enemy, index) => {
+        if(this.checkValInCircle(enemy, tower)) {
+          pre.push(index)
+        }
+        return pre
+      }, [])
     },
     /** 判断值是否在圆内 */
     checkValInCircle(enemy, tower) {
