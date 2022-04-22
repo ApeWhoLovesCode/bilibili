@@ -59,9 +59,26 @@
           <img v-show="proMoney.isShow" class="money-icon" src="./assets/img/Sun.gif" alt="" @click="proMoneyClick">
         </div>
         <!-- 游戏结束遮罩层 -->
-        <div v-if="isGameOver || !loadingDone" class="gameover-wrap">
+        <div v-if="isGameOver" class="gameover-wrap mask">
           <div class="info">你为了保护大司马抵御了{{level}}波僵尸</div>
-          <div class="mask"></div>
+        </div>
+        <!-- 游戏开始遮罩层 -->
+        <div v-if="isGameBeginMask" class="game-begin mask">
+          <div class="info">
+            <div v-if="!loadingDone" class="loading-wrap">
+              <div class="loading">
+                <div class="loading-item"></div>
+                <div class="loading-item"></div>
+                <div class="loading-item"></div>
+              </div>
+            </div>
+            <div v-else class="begin-wrap">
+              <span class="icon-wrap" @click="beginGame">
+                <span class="iconfont" :class="isPause ? 'icon-kaishi1' : 'icon-24gf-pause2'"></span>
+              </span>
+              <span class="begin-text">开始游戏</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -89,7 +106,9 @@ export default {
       canvasInfo: {left: 0, top: 0},
       // 得到 canvas 的 2d 上下文
       ctx: {},
+      // 是否加载完成
       loadingDone: false,
+      isGameBeginMask: true,
       // 游戏结束
       isGameOver: false,
       // 设置游戏的暂停
@@ -132,7 +151,7 @@ export default {
         {x: 0, y: 5, w: 100, h: 85, curFloorI: 0, speed: 5, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_8_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 150, hp: {cur: 200, sum: 200, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_9_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 200, hp: {cur: 500, sum: 500, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/afu.png"), imgList: [], imgIndex: 0},
-        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 300, hp: {cur: 1000, sum: 1000, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/fulisha.png"), imgList: [], imgIndex: 0},
+        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 1.5, reward: 300, hp: {cur: 1000, sum: 1000, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/fulisha.png"), imgList: [], imgIndex: 0},
       ],
       // 最小刻度
       minScale: 2,
@@ -154,11 +173,11 @@ export default {
       buildingScope: {left: 0, top: 0, r: 0, isShow: false, towerIndex: 0},
       // 塔防数据 name:名称, money:花费, r:攻击半径, damage:伤害, targetNum:攻击目标数量, rate:攻击速率(n毫秒/次), speed:子弹速度, bSize: 子弹大小, img:塔防图片, bulletImg:子弹图片
       towerList: [
-        {name: '茄子', money: 400, saleMoney: 200, r: 300, damage: 3,     targetNum: 1, rate: 1000, speed: 12, bSize: {w:20,h:20}, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '茄子', money: 500, saleMoney: 200, r: 300, damage: 5,     targetNum: 1, rate: 1200, speed: 12, bSize: {w:20,h:20}, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
         {name: '单发豌豆', money: 100, saleMoney: 50, r: 100, damage: 1,  targetNum: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
         {name: '两发豌豆', money: 200, saleMoney: 100, r: 150, damage: 1, targetNum: 2, rate: 600, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_2_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
         {name: '寒冰豌豆', money: 200, saleMoney: 100, r: 150, damage: 2, targetNum: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_snow_icon.gif"), bulletImg: require("./assets/img/plant/bullet2.png")},
-        {name: '三发豌豆', money: 300, saleMoney: 150, r: 200, damage: 1, targetNum: 3, rate: 900, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_3_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '三发豌豆', money: 350, saleMoney: 150, r: 200, damage: 1, targetNum: 3, rate: 900, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_3_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
       ],
       // 塔防加载完成图片
       towerOnloadImg: null,
@@ -261,7 +280,6 @@ export default {
   mounted() {
     this.init();
     this.getCanvasMargin()
-    this.$message({type: 'success', message: '点击右上方按钮或按空格键开始游戏', duration: 2500, showClose: true})
     // 监听浏览器窗口大小变化
     window.addEventListener("resize", this.getCanvasMargin);
   },
@@ -625,10 +643,7 @@ export default {
         this.calculateDistance(tower, x + w, y + h),
         this.calculateDistance(tower, x , y + h),
       ]
-      if(angleList.some(item => item <= tower.r)) {
-        return true
-      }
-      return false
+      return angleList.some(item => item <= tower.r)
     },
     /** 计算点到圆心的距离之间的距离 */
     calculateDistance(tower, x, y) {
@@ -717,6 +732,13 @@ export default {
           } 
         }
       };
+    },
+    /** 开始游戏 */
+    beginGame() {
+      this.playBgAudio()
+      this.isGameBeginMask = false
+      this.isPause = false
+      this.$message({type: 'success', message: '点击右上方按钮或按空格键开始 / 暂停游戏', duration: 2500, showClose: true})
     },
     /** 游戏暂停 */
     gamePause() {
@@ -971,6 +993,56 @@ export default {
         }
       }
       .gameover-wrap {
+        .info {
+          color: #fff;
+        }
+      }
+      .game-begin {
+        .info {
+          .begin-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            .icon-wrap {
+              display: inline-block;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              width: 150px;
+              height: 150px;
+              border-radius: 50%;
+              background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+              cursor: pointer;
+              user-select: none;
+              .iconfont {
+                color: #fff;
+                font-size: 80px;
+                animation: pulse 2s linear infinite;
+              }
+              @keyframes pulse {
+                70% {
+                  transform: scale(1.2);
+                  opacity: 0.4;
+                }
+                100% {
+                  transform: scale(1.2);
+                  opacity: 0;
+                }
+              }
+            }
+            .begin-text {
+              font-size: 36px;
+              color: #fff;
+              font-weight: bold;
+              margin-top: 16px;
+              letter-spacing: 8px;
+              margin-left: 8px;
+            }
+          }
+        }
+      }
+      .mask {
         position: absolute;
         left: 0;
         right: 0;
@@ -980,9 +1052,53 @@ export default {
         display: flex;
         justify-content: center;
         align-items: center;
-        .info {
-          color: #fff;
-        }
+      }
+    }
+  }
+  // 加载中
+  .loading-wrap {
+    display: flex;
+    justify-content: center;
+    .loading, .loading > .loading-item {
+      position: relative;
+      box-sizing: border-box;
+    }
+    .loading {
+      color: #ffffff;
+      font-size: 0;
+    }
+    .loading > .loading-item {
+      display: inline-block;
+      float: none;
+      background-color: currentColor;
+      border: 0 solid currentColor;
+    }
+    .loading > .loading-item:nth-child(1) {
+      animation-delay: -200ms;
+    }
+    .loading > .loading-item:nth-child(2) {
+      animation-delay: -100ms;
+    }
+    .loading > .loading-item:nth-child(3) {
+      animation-delay: 0ms;
+    }
+    .loading > .loading-item {
+      width: 30px;
+      height: 30px;
+      margin: 15px;
+      border-radius: 100%;
+      animation: ball-pulse 1s ease infinite;
+    }
+    @keyframes ball-pulse {
+      0%,
+      60%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      30% {
+        transform: scale(0.01);
+        opacity: 0.1;
       }
     }
   }
