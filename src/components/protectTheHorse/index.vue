@@ -65,13 +65,7 @@
         <!-- 游戏开始遮罩层 -->
         <div v-if="isGameBeginMask" class="game-begin mask">
           <div class="info">
-            <div v-if="!loadingDone" class="loading-wrap">
-              <div class="loading">
-                <div class="loading-item"></div>
-                <div class="loading-item"></div>
-                <div class="loading-item"></div>
-              </div>
-            </div>
+            <Loading v-if="!loadingDone" />
             <div v-else class="begin-wrap">
               <span class="icon-wrap" @click="beginGame">
                 <span class="iconfont" :class="isPause ? 'icon-kaishi1' : 'icon-24gf-pause2'"></span>
@@ -92,9 +86,13 @@
  */
 import SuperGif from './utils/libgif'
 import levelEnemyArr from './utils/levelEnemyArr'
+import Loading from './components/loading.vue'
 
 export default {
   name: 'protect-horse',
+  components: {
+    Loading,
+  },
   data() {
     return {
       title: '保卫大司马',
@@ -137,21 +135,21 @@ export default {
       enemy: [],
       // 偏移量y 是用来计算敌人与地板底部的距离 (两个地板(50*2)-敌人(h(75)+y(15))) = 10
       offset: {y: 10},
-      // 敌人资源 curFloorI: 当前所在格的索引, imgList: gif转静态图片数组
+      // 敌人资源 curFloorI: 当前所在格的索引, imgList: gif转静态图片数组, curSpeed: 当前的速度
       // ∵ offset.y = 10; ∴ h + y = 90
       enemySource: [
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 50, hp: {cur: 10, sum: 10, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 10, hp: {cur: 10, sum: 10, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 1.5, reward: 30, hp: {cur: 30, sum: 30, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, speed: 2, reward: 50, hp: {cur: 50, sum: 50, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, speed: 3, reward: 100, hp: {cur: 80, sum: 80, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5, w: 85, h: 85, curFloorI: 0, speed: 3, reward: -100, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_6_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, speed: 3.5, reward: 100, hp: {cur: 50, sum: 50, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_7_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5, w: 100, h: 85, curFloorI: 0, speed: 5, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_8_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 150, hp: {cur: 200, sum: 200, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_9_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 2, reward: 200, hp: {cur: 500, sum: 500, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/afu.png"), imgList: [], imgIndex: 0},
-        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0, speed: 1.5, reward: 300, hp: {cur: 1000, sum: 1000, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/fulisha.png"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, curSpeed: 1.5, speed: 1.5, reward: 50, hp: {cur: 10, sum: 10, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, curSpeed: 1.5, speed: 1.5, reward: 10, hp: {cur: 10, sum: 10, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, curSpeed: 1.5, speed: 1.5, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, curSpeed: 1.5, speed: 1.5, reward: 30, hp: {cur: 30, sum: 30, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, curSpeed: 2, speed: 2, reward: 50, hp: {cur: 50, sum: 50, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, curSpeed: 3, speed: 3, reward: 100, hp: {cur: 80, sum: 80, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5, w: 85, h: 85, curFloorI: 0,  curSpeed: 3, speed: 3, reward: -100, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_6_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, curSpeed: 3.5, speed: 3.5, reward: 100, hp: {cur: 50, sum: 50, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_7_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5, w: 100, h: 85, curFloorI: 0, curSpeed: 5, speed: 5, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_8_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0,  curSpeed: 2, speed: 2, reward: 150, hp: {cur: 200, sum: 200, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_9_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0,  curSpeed: 1, speed: 1, reward: 200, hp: {cur: 500, sum: 500, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/afu.png"), imgList: [], imgIndex: 0},
+        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0,  curSpeed: 3, speed: 3, reward: 300, hp: {cur: 1000, sum: 1000, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/fulisha.png"), imgList: [], imgIndex: 0},
       ],
       // 最小刻度
       minScale: 2,
@@ -171,19 +169,19 @@ export default {
       building: { left: 0, top: 0, isShow: false },
       // 塔防攻击范围
       buildingScope: {left: 0, top: 0, r: 0, isShow: false, towerIndex: 0},
-      // 塔防数据 name:名称, money:花费, r:攻击半径, damage:伤害, targetNum:攻击目标数量, rate:攻击速率(n毫秒/次), speed:子弹速度, bSize: 子弹大小, img:塔防图片, bulletImg:子弹图片
+      // 塔防数据 name:名称, money:花费, r:攻击半径, damage:伤害, targetNum:攻击目标数量, rate:攻击速率(n毫秒/次), speed:子弹速度, slow:{num:减速倍数,time:减速时间}  bSize: 子弹大小, img:塔防图片, bulletImg:子弹图片
       towerList: [
-        {name: '茄子', money: 500, saleMoney: 200, r: 300, damage: 5,     targetNum: 1, rate: 1200, speed: 12, bSize: {w:20,h:20}, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '单发豌豆', money: 100, saleMoney: 50, r: 100, damage: 1,  targetNum: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '茄子',     money: 500, saleMoney: 200, r: 300, damage: 5, targetNum: 1, rate: 1200, speed: 12, bSize: {w:20,h:20}, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '单发豌豆', money: 100, saleMoney: 50, r: 100, damage: 1, targetNum: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
         {name: '两发豌豆', money: 200, saleMoney: 100, r: 150, damage: 1, targetNum: 2, rate: 600, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_2_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '寒冰豌豆', money: 200, saleMoney: 100, r: 150, damage: 2, targetNum: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_snow_icon.gif"), bulletImg: require("./assets/img/plant/bullet2.png")},
+        {name: '寒冰豌豆', money: 300, saleMoney: 100, r: 150, damage: 1, targetNum: 2, rate: 900, speed: 5, slow: {num: 2, time: 5000}, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_snow_icon.gif"), bulletImg: require("./assets/img/plant/bullet2.png")},
         {name: '三发豌豆', money: 350, saleMoney: 150, r: 200, damage: 1, targetNum: 3, rate: 900, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_3_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
       ],
       // 塔防加载完成图片
       towerOnloadImg: null,
       // 塔防子弹加载完成图片
       towerBulletOnloadImg: null,
-      // 场上的防御塔数组 {x, y, shootFn(防抖的射击函数), targetIndexList(攻击的目标):[], bulletArr(子弹数组)[x,y(子弹当前位置),addX,addY(往目标方向增加的值),xy(当前距离),x_y(目标距离)], ...this.towerList[i], onload-img, onload-bulletImg
+      // 场上的防御塔数组 {x, y, shootFn(防抖的射击函数), targetIndexList(攻击的目标):[], bulletArr(子弹数组)[x,y(子弹当前位置),addX,addY(往目标方向增加的值),xy(当前距离),x_y(目标距离),e_i(目标索引)], ...this.towerList[i], onload-img, onload-bulletImg
       tower: [],
       isPlayBgAudio: false,
       // 背景音乐
@@ -226,9 +224,6 @@ export default {
           clearTimeout(this.pauseMakeEnemyTimer)
           clearInterval(this.makeEnemyTimer)
           clearInterval(this.proMoney.timer)
-          // const stopTime = new Date()
-          // console.log('暂停:', stopTime.getMinutes(), stopTime.getSeconds());
-          // this.timeDiff.stopTime = stopTime.getTime()
           this.timeDiff.stopTime = Date.now()
         } else {
           this.makeEnemy()
@@ -366,7 +361,7 @@ export default {
     shootBullet(eIndexlist, t_i) {
       // 添加攻击目标的索引
       this.tower[t_i].targetIndexList = eIndexlist
-      for(const e_i in eIndexlist) {
+      for(const e_i of eIndexlist) {
         if(!this.enemy[e_i]) break
         const {x, y, w, h} = this.enemy[e_i]
         // 敌人中心坐标
@@ -380,7 +375,7 @@ export default {
         // 子弹和敌人的距离
         const distance = this.powAndSqrt(diff.x, diff.y)
         const addX = speed * diff.x / distance, addY = speed * diff.y / distance
-        const bullet = {x: begin.x, y: begin.y, _x, _y, addX, addY, xy: 0, x_y: distance}
+        const bullet = {x: begin.x, y: begin.y, addX, addY, xy: 0, x_y: distance, e_i}
         this.tower[t_i].bulletArr.push(bullet)
       }
     },
@@ -442,31 +437,52 @@ export default {
           t.bulletArr[b_i].xy += t.speed
           // 子弹击中敌人
           if(t.bulletArr[b_i].xy >= x_y) {
+            const {e_i} = t.bulletArr[b_i]
             // 清除子弹
             t.bulletArr.splice(b_i, 1)
             // 敌人扣血
-            for(const index in t.targetIndexList) {
-              const e_i = t.targetIndexList[index]
-              if(this.enemy[e_i]) {
-                this.enemy[e_i].hp.cur -= t.damage
-                // 消灭敌人
-                if(this.enemy[e_i].hp.cur <= 0) {
-                  this.money += this.enemy[e_i].reward
-                  this.enemy.splice(e_i, 1)
-                  t.targetIndexList.splice(index, 1)
-                  if(t.name === '茄子') {
-                    this.playAudio('qizi-wujie')
-                  }
+            if(this.enemy[e_i]) {
+              this.enemy[e_i].hp.cur -= t.damage
+              // 消灭敌人
+              if(this.enemy[e_i].hp.cur <= 0) {
+                this.money += this.enemy[e_i].reward
+                this.removeEnemy(e_i)
+                t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === +e_i), 1)
+                if(t.name === '茄子') {
+                  this.playAudio('qizi-wujie')
+                }
+              } else {
+                // 判断减速
+                if(t.slow) {
+                  this.slowEnemy(e_i, t.slow)
                 }
               }
             }
+
           }
         }
       }
     },
-    /** 返回子弹需要移动的xy值 */
-    bulletMoveXY() {
-
+    /** 减速敌人 */
+    slowEnemy(e_i, t_slow) {
+      const { speed: e_speed } = this.enemy[e_i]
+      if(this.enemy[e_i].curSpeed === e_speed) {
+        this.enemy[e_i].curSpeed = e_speed / t_slow.num
+      }
+      if(this.enemy[e_i].durationTimer) {
+        clearTimeout(this.enemy[e_i].durationTimer)
+        this.enemy[e_i].durationTimer = setTimeout(() => {
+          if(this.enemy[e_i]) {
+            this.enemy[e_i].curSpeed = this.enemy[e_i].speed
+          }
+        }, t_slow.time)
+      } else {
+        this.$set(this.enemy[e_i], "durationTimer", 
+          setTimeout(() => {
+            this.enemy[e_i].curSpeed = this.enemy[e_i].speed
+          }, t_slow.time)
+        )
+      }
     },
     /** 画攻击范围 */
     drawAttackScope(tower) {
@@ -483,11 +499,20 @@ export default {
     /** 画敌人 */
     drawEnemy(index) {
       if(!this.enemy[index]) return
-      const { x, y, w, h, imgList, imgIndex, hp } = this.enemy[index]
+      const { x, y, w, h, imgList, imgIndex, hp, curSpeed, speed } = this.enemy[index]
       // this.ctx.translate(200, 0);
       // this.ctx.scale(-1, 1)
       this.ctx.drawImage(imgList[imgIndex], x, y, w, h) 
-      
+      // 绘画减速效果
+      if(curSpeed !== speed) {
+        // this.ctx.fillRect(x + w / 2, y, w / 2, h / 2)
+        this.ctx.beginPath();
+        this.ctx.arc(x + w / 2, y + h / 2, w / 5, 0, 2 * Math.PI, false)
+        this.ctx.fillStyle = 'rgba(2, 38, 241, 0.3)'
+        this.ctx.fill()
+        this.ctx.strokeStyle = '#022ef1'
+        this.ctx.stroke()
+      }
       if(hp.cur === hp.sum) return
       // 绘画生命值
       const w_2 = w - hp.size
@@ -504,10 +529,10 @@ export default {
     },
     /** 敌人移动 */
     moveEnemy(index) {
-      const { w, h, speed, curFloorI } = this.enemy[index]
+      const { w, h, curSpeed, speed, curFloorI } = this.enemy[index]
       // 敌人到达终点
       if(curFloorI === this.floorTile.num - 1) {
-        this.enemy.splice(index, 1)
+        this.removeEnemy(index)
         this.hp -= 1
         this.playAudio('ma-nansou')
         return true
@@ -515,18 +540,17 @@ export default {
       const size = this.gridInfo.size
       // 将格子坐标同步到敌人的坐标
       const { x, y, x_y } = this.movePath[curFloorI]
-      // const _y = y - (size - this.offset.y)
-      const _y = y - (size - (size * 2 - h - this.offset.y))
       // 敌人需要站在地板中间区域
+      const _y = y - (size - (size * 2 - h - this.offset.y))
       const _x = x - (w - size)
       switch (x_y) {
-        case 1: this.enemy[index].x -= speed; break;
-        case 2: this.enemy[index].y -= speed; break;
-        case 3: this.enemy[index].x += speed; break;
-        case 4: this.enemy[index].y += speed; break;
+        case 1: this.enemy[index].x -= curSpeed; break;
+        case 2: this.enemy[index].y -= curSpeed; break;
+        case 3: this.enemy[index].x += curSpeed; break;
+        case 4: this.enemy[index].y += curSpeed; break;
       }
       const { x: eX, y: eY } = this.enemy[index]
-      // if(eX === _x && eY === _y) {
+      // 敌人到达下一个格子
       if((eX >= _x &&  eX <= _x + speed) && (eY >= _y &&  eY <= _y + speed)) {
         this.enemy[index].curFloorI++
       }
@@ -550,11 +574,16 @@ export default {
     },
     /** 生成敌人 */
     setEnemy() {
-      // const stopTime = new Date()
-      // console.log('敌人:', stopTime.getMinutes(), stopTime.getSeconds());
       this.timeDiff.curTime = Date.now()
       this.enemy.push(this.$lodash.cloneDeep(this.enemySource[this.levelEnemy[this.createdEnemyNum]]))
       this.createdEnemyNum++
+    },
+    /** 消灭敌人 */
+    removeEnemy(index) {
+      if(this.enemy[index].durationTimer) {
+        clearTimeout(this.enemy[index].durationTimer)
+      }
+      this.enemy.splice(index, 1)
     },
     /** 初始化所有格子 */
     initAllGrid() {
@@ -627,12 +656,20 @@ export default {
     },
     /** 返回进入攻击范围的值的数组 */
     enterAttackScopeList(enemyList, tower) {
-      return enemyList.reduce((pre, enemy, index) => {
+      const list = enemyList.reduce((pre, enemy, index) => {
         if(this.checkValInCircle(enemy, tower)) {
-          pre.push(index)
+          pre.push({curIndex: enemy.curIndex, index})
         }
         return pre
       }, [])
+      list.sort((a, b) => b.curIndex - a.curIndex)
+      return list.map(item => item.index)
+      // return enemyList.reduce((pre, enemy, index) => {
+      //   if(this.checkValInCircle(enemy, tower)) {
+      //     pre.push(index)
+      //   }
+      //   return pre
+      // }, [])
     },
     /** 判断值是否在圆内 */
     checkValInCircle(enemy, tower) {
@@ -725,6 +762,7 @@ export default {
     /** 监听用户的键盘事件 */
     onKeyDown() {
       document.onkeydown = (e) => {
+        if(this.isGameBeginMask) return
         switch (e.code) {
           case "Space":{
             this.gamePause()
@@ -1052,53 +1090,6 @@ export default {
         display: flex;
         justify-content: center;
         align-items: center;
-      }
-    }
-  }
-  // 加载中
-  .loading-wrap {
-    display: flex;
-    justify-content: center;
-    .loading, .loading > .loading-item {
-      position: relative;
-      box-sizing: border-box;
-    }
-    .loading {
-      color: #ffffff;
-      font-size: 0;
-    }
-    .loading > .loading-item {
-      display: inline-block;
-      float: none;
-      background-color: currentColor;
-      border: 0 solid currentColor;
-    }
-    .loading > .loading-item:nth-child(1) {
-      animation-delay: -200ms;
-    }
-    .loading > .loading-item:nth-child(2) {
-      animation-delay: -100ms;
-    }
-    .loading > .loading-item:nth-child(3) {
-      animation-delay: 0ms;
-    }
-    .loading > .loading-item {
-      width: 30px;
-      height: 30px;
-      margin: 15px;
-      border-radius: 100%;
-      animation: ball-pulse 1s ease infinite;
-    }
-    @keyframes ball-pulse {
-      0%,
-      60%,
-      100% {
-        transform: scale(1);
-        opacity: 1;
-      }
-      30% {
-        transform: scale(0.01);
-        opacity: 0.1;
       }
     }
   }
