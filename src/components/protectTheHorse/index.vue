@@ -146,10 +146,10 @@ export default {
         {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, curSpeed: 3, speed: 3, reward: 100, hp: {cur: 80, sum: 80, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 5, w: 85, h: 85, curFloorI: 0,  curSpeed: 3, speed: 3, reward: -100, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_6_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, curSpeed: 3.5, speed: 3.5, reward: 100, hp: {cur: 50, sum: 50, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_7_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5, w: 100, h: 85, curFloorI: 0, curSpeed: 5, speed: 5, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_8_move.gif"), imgList: [], imgIndex: 0},
+        {x: 0, y: 5, w: 100, h: 85, curFloorI: 0, curSpeed: 4, speed: 4, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_8_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 0, w: 90, h: 90, curFloorI: 0,  curSpeed: 2, speed: 2, reward: 150, hp: {cur: 200, sum: 200, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_9_move.gif"), imgList: [], imgIndex: 0},
         {x: 0, y: 0, w: 90, h: 90, curFloorI: 0,  curSpeed: 1.5, speed: 1.5, reward: 200, hp: {cur: 500, sum: 500, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/afu.png"), imgList: [], imgIndex: 0},
-        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0,  curSpeed: 1.5, speed: 1.5, reward: 300, hp: {cur: 1000, sum: 1000, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/fulisha.png"), imgList: [], imgIndex: 0},
+        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0,  curSpeed: 1.5, speed: 1.5, reward: 300, hp: {cur: 800, sum: 800, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/fulisha.png"), imgList: [], imgIndex: 0},
       ],
       // 最小刻度
       minScale: 2,
@@ -171,7 +171,7 @@ export default {
       buildingScope: {left: 0, top: 0, r: 0, isShow: false, towerIndex: 0},
       // 塔防数据 name:名称, money:花费, r:攻击半径, damage:伤害, targetNum:攻击目标数量, rate:攻击速率(n毫秒/次), speed:子弹速度, slow:{num:减速倍数,time:减速时间}  bSize: 子弹大小, img:塔防图片, bulletImg:子弹图片
       towerList: [
-        {name: '茄子',     money: 500, saleMoney: 200, r: 300, damage: 5, targetNum: 1, rate: 1200, speed: 12, bSize: {w:20,h:20}, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
+        {name: '茄子',     money: 500, saleMoney: 200, r: 300, damage: 5, targetNum: 1, rate: 1100, speed: 12, bSize: {w:20,h:20}, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
         {name: '单发豌豆', money: 100, saleMoney: 50, r: 100, damage: 1, targetNum: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
         {name: '两发豌豆', money: 200, saleMoney: 100, r: 150, damage: 1, targetNum: 1, rate: 450, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_2_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
         {name: '寒冰豌豆', money: 300, saleMoney: 100, r: 150, damage: 1, targetNum: 2, rate: 900, speed: 5, slow: {num: 2, time: 5000}, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_snow_icon.gif"), bulletImg: require("./assets/img/plant/bullet2.png")},
