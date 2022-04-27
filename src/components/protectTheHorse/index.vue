@@ -7,7 +7,7 @@
       <div class="title">{{title}}</div>
       <div class="canvas-wrap" @click="hiddenTowerOperation">
         <!-- 游戏顶部信息展示区域 -->
-        <div class="info-wrap">
+        <div class="top-wrap">
           <div class="left">
             <span class="icon-wrap">
               <span class="iconfont icon-jinbi1"></span>
@@ -21,16 +21,30 @@
             波僵尸
           </div>
           <div class="right">
-            <span class="icon-wrap icon-hover" @click="gamePause()">
-              <span class="iconfont" :class="isPause ? 'icon-kaishi1' : 'icon-24gf-pause2'"></span>
-            </span>
-            <span class="icon-wrap icon-hover" @click="playBgAudio">
-              <span class="iconfont" :class="isPlayBgAudio ? 'icon-mn_shengyin_fill' : 'icon-mn_shengyinwu_fill'"></span>
-            </span>
-            <span class="icon-wrap icon-hover">
-              <span class="iconfont icon-xuanxiangka_fuzhi"></span>
-            </span>
+            <el-tooltip effect="dark" content="开始 / 暂停游戏" placement="bottom">
+              <span class="icon-wrap icon-hover" @click="gamePause()">
+                <span class="iconfont" :class="isPause ? 'icon-kaishi1' : 'icon-24gf-pause2'"></span>
+              </span>
+            </el-tooltip>
+            <el-tooltip effect="dark" content="播放 / 关闭音乐" placement="bottom">
+              <span class="icon-wrap icon-hover" @click="playBgAudio()">
+                <span class="iconfont" :class="isPlayBgAudio ? 'icon-mn_shengyin_fill' : 'icon-mn_shengyinwu_fill'"></span>
+              </span>
+            </el-tooltip>
+            <el-tooltip effect="dark" content="其他工具（待开发）" placement="bottom">
+              <span class="icon-wrap icon-hover">
+                <span class="iconfont icon-xuanxiangka_fuzhi"></span>
+              </span>
+            </el-tooltip>
           </div>
+        </div>
+        <!-- 游戏底部技能区 -->
+        <div class="skill-wrap">
+          <span v-for="(item, index) in skillList" :key="index">
+            <el-tooltip effect="dark" :content="item.name" placement="top">
+              <span class="skill iconfont" :class="item.icon" @click="handleSkill(item)"></span>
+            </el-tooltip>
+          </span>
         </div>
         <!-- 游戏区域 -->
         <canvas ref="canvasRef" id="mycanvas" width="1050" height="600" @click="getMouse($event)"></canvas>
@@ -39,7 +53,7 @@
         <div v-show="building.isShow" class="building-wrap" :style="buildingStyle">
           <img src="./assets/img/add.png" alt="" class="add-icon">
           <div class="tower-wrap" :class="buildingClass">
-            <div class="tower" :class="money < item.money ? 'tower-no-money' : ''" v-for="(item, index) in towerList" @click="buildTower(index)">
+            <div class="tower" :class="money < item.money ? 'tower-no-money' : ''" v-for="(item, index) in towerList" :key="index" @click="buildTower(index)">
               <img :src="item.img" alt="" class="tower-icon">
               <div class="info">￥{{item.money}}</div>
             </div>
@@ -90,6 +104,7 @@ import levelEnemyArr from './utils/levelEnemyArr'
 import towerData from './utils/towerData'
 import enemyData from './utils/enemyData'
 import audioData from './utils/audioData'
+import skillData from './utils/skillData'
 
 export default {
   name: 'protect-horse',
@@ -169,7 +184,9 @@ export default {
       isPlayBgAudio: false,
       // 背景音乐
       audioKey: '',
-      audioList: audioData
+      audioList: audioData,
+      // 底部技能栏
+      skillList: skillData
     }
   },
   computed: {
@@ -482,18 +499,6 @@ export default {
         )
       }
     },
-    /** 画攻击范围 */
-    drawAttackScope(tower) {
-      if(!tower) return
-      const size_2 = this.gridInfo.size / 2
-      const {r, x, y} = tower
-      // arc (x, y, 半径, 0, 0到 2 * Math.PI 弧度, ture(逆时针))
-      // this.ctx.beginPath()
-      this.ctx.arc(x + size_2, y + size_2, r, 0, 2 * Math.PI, false)
-      this.ctx.lineWidth = 2
-      this.ctx.strokeStyle = '#282c34'
-      this.ctx.stroke()
-    },
     /** 画敌人 */
     drawEnemy(index) {
       if(!this.enemy[index]) return
@@ -583,6 +588,22 @@ export default {
       }
       this.enemy.splice(index, 1)
     },
+    /** 发动技能 */
+    handleSkill(skill) {
+      const { damage } = skill
+      for(const e_i in this.enemy) {
+        this.enemy[e_i].hp.cur -= damage
+        console.log('this.enemy[e_i].hp.cur: ', this.enemy[e_i].hp.cur);
+         if(this.enemy[e_i].hp.cur <= 0) {
+          this.money += this.enemy[e_i].reward
+          this.removeEnemy(e_i)
+          // 遍历清除防御塔里的该攻击目标
+          for(const t of this.tower) {
+            t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === +e_i), 1)
+          }
+        }
+      }
+    },
     /** 初始化所有格子 */
     initAllGrid() {
       const { x_num, y_num } = this.gridInfo
@@ -594,6 +615,18 @@ export default {
         }
       }
       this.gridInfo.arr = arr
+    },
+    /** 画攻击范围 */
+    drawAttackScope(tower) {
+      if(!tower) return
+      const size_2 = this.gridInfo.size / 2
+      const {r, x, y} = tower
+      // arc (x, y, 半径, 0, 0到 2 * Math.PI 弧度, ture(逆时针))
+      // this.ctx.beginPath()
+      this.ctx.arc(x + size_2, y + size_2, r, 0, 2 * Math.PI, false)
+      this.ctx.lineWidth = 2
+      this.ctx.strokeStyle = '#282c34'
+      this.ctx.stroke()
     },
     /** 初始化行动轨迹 */
     initMovePath() {
@@ -836,11 +869,11 @@ export default {
     }
     .canvas-wrap {
       position: relative;
-      padding: 50px 50px 30px;
+      padding: 50px 50px 50px;
       background-image: radial-gradient(circle 500px at center, #16d9e3 0%, #30c7ec 47%, #46aef7 100%);
       border-radius: 4px;
       overflow: hidden;
-      .info-wrap {
+      .top-wrap {
         position: absolute;
         top: 0;
         left: 30px;
@@ -927,6 +960,32 @@ export default {
               font-size: 16px;
               color: #fff;
             }
+          }
+        }
+      }
+      .skill-wrap {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        height: 48px;
+        background: #d2f5fa;
+        box-shadow: 3px -2px 14px 2px #0e80c7;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding: 0 20px;
+        .skill {
+          font-size: 32px;
+          margin-right: 15px;
+          padding: 4px;
+          border-radius: 5px;
+          color: @fontColor;
+          cursor: pointer;
+          &:hover {
+            color: #157ab5;
+            background: rgba(216, 216, 216, 0.4);
           }
         }
       }

@@ -21,7 +21,8 @@ import {
   Radio,
   Badge,
   Backtop,
-  Pagination
+  Pagination,
+  Tooltip
 } from 'element-ui'
 
 Vue.use(Button)
@@ -45,7 +46,7 @@ Vue.use(Radio)
 Vue.use(Badge)
 Vue.use(Backtop)
 Vue.use(Pagination)
-
+Vue.use(Tooltip)
 
 // 需要全局挂载 挂载到Vue的原型上
 Vue.prototype.$message = Message
