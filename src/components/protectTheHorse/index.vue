@@ -38,7 +38,7 @@
         <!-- 上面和左边内边距是 50px -->
         <div v-show="building.isShow" class="building-wrap" :style="buildingStyle">
           <img src="./assets/img/add.png" alt="" class="add-icon">
-          <div class="tower-wrap" >
+          <div class="tower-wrap" :class="buildingClass">
             <div class="tower" :class="money < item.money ? 'tower-no-money' : ''" v-for="(item, index) in towerList" @click="buildTower(index)">
               <img :src="item.img" alt="" class="tower-icon">
               <div class="info">￥{{item.money}}</div>
@@ -173,11 +173,31 @@ export default {
     }
   },
   computed: {
+    /** 塔防容器的样式 */
     buildingStyle() {
       const {left, top} = this.building
       const size = this.gridInfo.size
       return {left: left + size + 'px', top: top + size + 'px'}
     },
+    /** 塔防容器的类目 */
+    buildingClass() {
+      const {left, top} = this.building
+      const {x_num, y_num, size} = this.gridInfo
+      const _x_num = Math.round(left / size), _y_num = Math.round(top / size)
+      let className = ''
+      if(_y_num >= y_num - 3) {
+        className += 'tower-wrap-bottom '
+      }
+      // 点击在左右两边的情况
+      if(_x_num <= 1 || _x_num >= x_num - 2) {
+        className += 'tower-wrap-row '
+        if(_y_num >= 2) className += 'tower-wrap-row-top '
+        if(_x_num <= 1) className += 'tower-wrap-left'
+        else className += 'tower-wrap-right'
+      }
+      return className
+    },
+    /** 攻击范围的样式 */ 
     buildingScopeStyle() {
       const padding = 50
       const size = this.gridInfo.size / 2
@@ -919,16 +939,16 @@ export default {
         }
         .tower-wrap {
           position: absolute;
-          top: calc(@size + 6px);
-          left: calc(50% - 120px);
-          // 50 * 5 = 250
-          width: calc(@size * 5 - 10px);
-          display: flex;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          background: rgba(255, 255, 255, .3);
+          top: calc(@size + 8px);
+          left: calc(50% - (@size * 2 + 25px));
+          display: grid;
+          gap: 10px;
+          grid-template-columns: repeat(4, @size);
+          grid-template-rows: repeat(2, @size);
+          background: rgba(255, 255, 255, .4);
           border-radius: 16px;
-          padding: 12px;
+          padding: 10px;
+          z-index: 99;
           .tower {
             position: relative;
             width: @size;
@@ -955,6 +975,30 @@ export default {
           .tower-no-money {
             opacity: .3;
           }
+        }
+        .tower-wrap-row {
+          grid-template-rows: repeat(4, @size);
+          grid-template-columns: repeat(2, @size);
+          grid-auto-flow: column;
+          width: auto;
+          .tower {
+            margin-bottom: 0;
+            margin-right: 10px;
+          }
+        }
+        .tower-wrap-row-top {
+          top: calc(50% - (@size * 2 + 25px));
+        }
+        .tower-wrap-left {
+          left: calc(@size + 8px);
+        }
+        .tower-wrap-right {
+          right: calc(@size + 8px);
+          left: auto;
+        }
+        .tower-wrap-bottom {
+          bottom: calc(@size + 8px);
+          top: auto;
         }
       }
       .building-scope {
