@@ -1,5 +1,6 @@
 /* @import './fontscss.css'; */
-@import url(//at.alicdn.com/t/font_2495242_78up4ccjuqn.css);
+/** https://www.iconfont.cn/manage/index?manage_type=myprojects&projectId=2495242 */
+@import url(//at.alicdn.com/t/font_2495242_6oycqj5dn5o.css);
 
 * {
   box-sizing: border-box;

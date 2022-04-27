@@ -21,13 +21,13 @@
             波僵尸
           </div>
           <div class="right">
-            <span class="icon-wrap" @click="gamePause()">
+            <span class="icon-wrap icon-hover" @click="gamePause()">
               <span class="iconfont" :class="isPause ? 'icon-kaishi1' : 'icon-24gf-pause2'"></span>
             </span>
-            <span class="icon-wrap" @click="playBgAudio">
-              <span class="iconfont icon-yinle"></span>
+            <span class="icon-wrap icon-hover" @click="playBgAudio">
+              <span class="iconfont" :class="isPlayBgAudio ? 'icon-mn_shengyin_fill' : 'icon-mn_shengyinwu_fill'"></span>
             </span>
-            <span class="icon-wrap">
+            <span class="icon-wrap icon-hover">
               <span class="iconfont icon-xuanxiangka_fuzhi"></span>
             </span>
           </div>
@@ -84,9 +84,12 @@
  * 必要优化-待完成
  * 1.子弹提前预判敌人位置
  */
+import Loading from './components/loading.vue'
 import SuperGif from './utils/libgif'
 import levelEnemyArr from './utils/levelEnemyArr'
-import Loading from './components/loading.vue'
+import towerData from './utils/towerData'
+import enemyData from './utils/enemyData'
+import audioData from './utils/audioData'
 
 export default {
   name: 'protect-horse',
@@ -135,22 +138,8 @@ export default {
       enemy: [],
       // 偏移量y 是用来计算敌人与地板底部的距离 (两个地板(50*2)-敌人(h(75)+y(15))) = 10
       offset: {y: 10},
-      // 敌人资源 curFloorI: 当前所在格的索引, imgList: gif转静态图片数组, curSpeed: 当前的速度
-      // ∵ offset.y = 10; ∴ h + y = 90
-      enemySource: [
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, curSpeed: 1.5, speed: 1.5, reward: 50, hp: {cur: 10, sum: 10, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_0_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, curSpeed: 1.5, speed: 1.5, reward: 10, hp: {cur: 10, sum: 10, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_1_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, curSpeed: 1.5, speed: 1.5, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_2_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, curSpeed: 1.5, speed: 1.5, reward: 30, hp: {cur: 30, sum: 30, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_3_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 15, w: 75, h: 75, curFloorI: 0, curSpeed: 2, speed: 2, reward: 50, hp: {cur: 50, sum: 50, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_4_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, curSpeed: 3, speed: 3, reward: 100, hp: {cur: 80, sum: 80, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_5_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5, w: 85, h: 85, curFloorI: 0,  curSpeed: 3, speed: 3, reward: -100, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_6_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5,  w: 85, h: 85, curFloorI: 0, curSpeed: 3.5, speed: 3.5, reward: 100, hp: {cur: 50, sum: 50, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_7_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 5, w: 100, h: 85, curFloorI: 0, curSpeed: 4, speed: 4, reward: 20, hp: {cur: 20, sum: 20, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_8_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0,  curSpeed: 2, speed: 2, reward: 150, hp: {cur: 200, sum: 200, size: 8}, type: 'gif', imgSource: require("./assets/img/zombies/zombies_9_move.gif"), imgList: [], imgIndex: 0},
-        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0,  curSpeed: 1.5, speed: 1.5, reward: 200, hp: {cur: 500, sum: 500, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/afu.png"), imgList: [], imgIndex: 0},
-        {x: 0, y: 0, w: 90, h: 90, curFloorI: 0,  curSpeed: 1.5, speed: 1.5, reward: 300, hp: {cur: 800, sum: 800, size: 8}, type: 'png', imgSource: require("./assets/img/zombies/fulisha.png"), imgList: [], imgIndex: 0},
-      ],
+      // 敌人资源
+      enemySource: enemyData,
       // 最小刻度
       minScale: 2,
       // 所有静态图片资源
@@ -169,14 +158,8 @@ export default {
       building: { left: 0, top: 0, isShow: false },
       // 塔防攻击范围
       buildingScope: {left: 0, top: 0, r: 0, isShow: false, towerIndex: 0},
-      // 塔防数据 name:名称, money:花费, r:攻击半径, damage:伤害, targetNum:攻击目标数量, rate:攻击速率(n毫秒/次), speed:子弹速度, slow:{num:减速倍数,time:减速时间}  bSize: 子弹大小, img:塔防图片, bulletImg:子弹图片
-      towerList: [
-        {name: '茄子',     money: 500, saleMoney: 200, r: 300, damage: 5, targetNum: 1, rate: 1100, speed: 12, bSize: {w:20,h:20}, img: require("./assets/img/plant/qiezi.png"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '单发豌豆', money: 100, saleMoney: 50, r: 100, damage: 1, targetNum: 1, rate: 900, speed: 5, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '两发豌豆', money: 200, saleMoney: 100, r: 150, damage: 1, targetNum: 1, rate: 450, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_2_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
-        {name: '寒冰豌豆', money: 300, saleMoney: 100, r: 150, damage: 1, targetNum: 2, rate: 900, speed: 5, slow: {num: 2, time: 5000}, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_snow_icon.gif"), bulletImg: require("./assets/img/plant/bullet2.png")},
-        {name: '三发豌豆', money: 350, saleMoney: 150, r: 200, damage: 1, targetNum: 3, rate: 900, speed: 8, bSize: {w:20,h:20}, img: require("./assets/img/plant/pea_3_icon.gif"), bulletImg: require("./assets/img/plant/bullet.png")},
-      ],
+      // 塔防数据 
+      towerList: towerData,
       // 塔防加载完成图片
       towerOnloadImg: null,
       // 塔防子弹加载完成图片
@@ -186,12 +169,7 @@ export default {
       isPlayBgAudio: false,
       // 背景音乐
       audioKey: '',
-      audioList: {
-        'ma-qifei': require("./assets/audio/ma-qifei.mp3"),
-        'ma-nansou': require("./assets/audio/ma-nansou.wav"),
-        'qizi-wujie': require("./assets/audio/qizi-wujie.mp3"),
-      }
-      ,
+      audioList: audioData
     }
   },
   computed: {
@@ -921,6 +899,10 @@ export default {
             &:last-child {
               margin-right: 0;
             }
+            &:hover {
+              opacity: .85;
+              box-shadow: 2px 2px 5px 1px #439ce9;
+            }
             .iconfont {
               font-size: 16px;
               color: #fff;
@@ -1053,6 +1035,10 @@ export default {
               background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
               cursor: pointer;
               user-select: none;
+              &:hover {
+                opacity: .95;
+                box-shadow: 0 0 16px 4px #3393e7;
+              }
               .iconfont {
                 color: #fff;
                 font-size: 80px;
