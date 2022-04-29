@@ -42,7 +42,11 @@
         <div class="skill-wrap">
           <span v-for="(item, index) in skillList" :key="index">
             <el-tooltip effect="dark" :content="item.name" placement="top">
-              <span class="skill iconfont" :class="item.icon" @click="handleSkill(item)"></span>
+              <span class="skill-item">
+                <span class="skill iconfont" :class="item.icon" @click="handleSkill(item, index)"></span>
+                <!-- <span class="skill-disable iconfont icon-disablecase"></span> -->
+                <span v-show="item.curTime" class="skill-disable skill-time">{{item.curTime / 1000}}</span>
+              </span>
             </el-tooltip>
           </span>
         </div>
@@ -101,10 +105,10 @@
 import Loading from './components/loading.vue'
 import SuperGif from './utils/libgif'
 import levelEnemyArr from './utils/levelEnemyArr'
-import towerData from './utils/towerData'
-import enemyData from './utils/enemyData'
-import audioData from './utils/audioData'
-import skillData from './utils/skillData'
+import towerData from './dataSource/towerData'
+import enemyData from './dataSource/enemyData'
+import audioData from './dataSource/audioData'
+import skillData from './dataSource/skillData'
 
 export default {
   name: 'protect-horse',
@@ -461,7 +465,7 @@ export default {
               // 消灭敌人
               if(this.enemy[e_i].hp.cur <= 0) {
                 this.money += this.enemy[e_i].reward
-                this.removeEnemy(e_i)
+                this.removeEnemy([e_i])
                 t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === +e_i), 1)
                 if(t.name === '茄子') {
                   this.playAudio('qizi-wujie')
@@ -535,7 +539,7 @@ export default {
       const { w, h, curSpeed, speed, curFloorI } = this.enemy[index]
       // 敌人到达终点
       if(curFloorI === this.floorTile.num - 1) {
-        this.removeEnemy(index)
+        this.removeEnemy([index])
         this.hp -= 1
         this.playAudio('ma-nansou')
         return true
@@ -582,27 +586,42 @@ export default {
       this.createdEnemyNum++
     },
     /** 消灭敌人 */
-    removeEnemy(index) {
-      if(this.enemy[index].durationTimer) {
-        clearTimeout(this.enemy[index].durationTimer)
+    removeEnemy(e_iList) {
+      if(!e_iList.length) return
+      for(let e_i in e_iList) {
+        if(this.enemy[e_i].durationTimer) {
+          clearTimeout(this.enemy[e_i].durationTimer)
+        }
+        delete this.enemy[e_i]
       }
-      this.enemy.splice(index, 1)
+      this.enemy = this.enemy.filter(e => e)
     },
     /** 发动技能 */
-    handleSkill(skill) {
-      const { damage } = skill
-      for(const e_i in this.enemy) {
-        this.enemy[e_i].hp.cur -= damage
-        console.log('this.enemy[e_i].hp.cur: ', this.enemy[e_i].hp.cur);
-         if(this.enemy[e_i].hp.cur <= 0) {
-          this.money += this.enemy[e_i].reward
-          this.removeEnemy(e_i)
-          // 遍历清除防御塔里的该攻击目标
-          for(const t of this.tower) {
-            t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === +e_i), 1)
+    handleSkill(skill, index) {
+      const { name, damage, cd } = skill
+      if(name === '燃烧') {
+        const e_iList = []
+        for(const e_i in this.enemy) {
+          this.enemy[e_i].hp.cur -= damage
+           if(this.enemy[e_i].hp.cur <= 0) {
+            this.money += this.enemy[e_i].reward
+            e_iList.push(e_i)
+            // 遍历清除防御塔里的该攻击目标
+            for(const t of this.tower) {
+              t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === +e_i), 1)
+            }
           }
         }
+        this.removeEnemy(e_iList)
       }
+      this.skillList[index].curTime = cd 
+      this.skillList[index].timer = setInterval(() => {
+        this.skillList[index].curTime -= 1000
+        if(this.skillList[index].curTime <= 0) clearInterval(this.skillList[index].timer)
+      }, 1000)
+      this.$once("hook:beforeDestroy", () => {
+        if(this.skillList[index]) clearInterval(this.skillList[index].timer)
+      })
     },
     /** 初始化所有格子 */
     initAllGrid() {
@@ -695,12 +714,6 @@ export default {
       }, [])
       list.sort((a, b) => b.curIndex - a.curIndex)
       return list.map(item => item.index)
-      // return enemyList.reduce((pre, enemy, index) => {
-      //   if(this.checkValInCircle(enemy, tower)) {
-      //     pre.push(index)
-      //   }
-      //   return pre
-      // }, [])
     },
     /** 判断值是否在圆内 */
     checkValInCircle(enemy, tower) {
@@ -976,16 +989,41 @@ export default {
         border-top-left-radius: 8px;
         border-top-right-radius: 8px;
         padding: 0 20px;
-        .skill {
-          font-size: 32px;
+        user-select: none;
+        .skill-item {
+          position: relative;
           margin-right: 15px;
-          padding: 4px;
-          border-radius: 5px;
-          color: @fontColor;
+          border-radius: 8px;
+          display: inline-block;
+          width: 40px;
+          height: 40px;
+          text-align: center;
+          line-height: 40px;
           cursor: pointer;
           &:hover {
-            color: #157ab5;
             background: rgba(216, 216, 216, 0.4);
+          }
+          .skill {
+            font-size: 32px;
+            color: @fontColor;
+            &:hover {
+              color: #157ab5;
+            }
+          }
+          .skill-disable {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            font-size: 32px;
+            color: rgba(85, 174, 247, 0.5);
+            background: rgba(216, 216, 216, 0.3);
+            border-radius: 50%;
+          }
+          .skill-time {
+            color: #888;
+            font-weight: bold;
           }
         }
       }
