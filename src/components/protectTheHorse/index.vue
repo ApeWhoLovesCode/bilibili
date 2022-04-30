@@ -1,8 +1,10 @@
 <template>
   <div id="protect-horse">
     <div class="back" @click="$router.push('/')">回到首页</div>
-    <audio ref="audioBgRef" :src="require('./assets/audio/pvz-morning.mp3')" loop></audio>
-    <audio ref="audioRef" :src="audioList[audioKey]"></audio>
+    <audio ref="audioBgRef" :src="audioList['pvz-morning']" loop></audio>
+    <audio ref="audioTowerRef" :src="audioList[audioTower]"></audio>
+    <audio ref="audioSkillRef" :src="audioList[audioSkill]"></audio>
+    <audio ref="audioEndRef" :src="audioList[audioEnd]"></audio>
     <div class="game-wrap">
       <div class="title">{{title}}</div>
       <div class="canvas-wrap" @click="hiddenTowerOperation">
@@ -138,11 +140,11 @@ export default {
       // 生命值
       hp: 10,
       // 金钱
-      money: 500,
+      money: 50000,
       // 生产的金钱
       proMoney: {isShow: false, timer: null, interval: 10000, money: 25},
       // 敌人生成间隔时间
-      intervalTime: 800, 
+      intervalTime: 300, 
       // 存放上一次和本次生成的敌人时间戳，用于暂停判断还有多久产生敌人
       timeDiff: {curTime: 0, stopTime: 0},
       // 生成敌人的定时器
@@ -186,11 +188,16 @@ export default {
       // 场上的防御塔数组 {x, y, shootFn(防抖的射击函数), targetIndexList(攻击的目标):[], bulletArr(子弹数组)[x,y(子弹当前位置),addX,addY(往目标方向增加的值),xy(当前距离),x_y(目标距离),e_i(目标索引)], ...this.towerList[i], onload-img, onload-bulletImg
       tower: [],
       isPlayBgAudio: false,
-      // 背景音乐
-      audioKey: '',
+      // 所有音乐数据
       audioList: audioData,
+      // 终点音乐
+      audioEnd: '',
+      // 塔防音乐
+      audioTower: '',
+      // 当前技能音乐
+      audioSkill: '',
       // 底部技能栏
-      skillList: skillData
+      skillList: skillData,
     }
   },
   computed: {
@@ -259,6 +266,11 @@ export default {
           this.createdEnemyNum = 0
           this.money += this.proMoney.money * (this.level + 1)
           if(val < levelEnemyArr.length) {
+            if(val && (val / 10) % 1 === 0) {
+              clearInterval(this.proMoney.timer)
+              this.startMoneyTimer()
+              this.playAudio('ma-pvz', 'End')
+            }
             this.levelEnemy = levelEnemyArr[val]
           } else {
             const list = [0]
@@ -468,7 +480,7 @@ export default {
                 this.removeEnemy([e_i])
                 t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === +e_i), 1)
                 if(t.name === '茄子') {
-                  this.playAudio('qizi-wujie')
+                  this.playAudio('qizi-wujie', 'Tower')
                 }
               } else {
                 // 判断减速
@@ -541,7 +553,7 @@ export default {
       if(curFloorI === this.floorTile.num - 1) {
         this.removeEnemy([index])
         this.hp -= 1
-        this.playAudio('ma-nansou')
+        this.playAudio('ma-nansou', 'End')
         return true
       }
       const size = this.gridInfo.size
@@ -598,7 +610,7 @@ export default {
     },
     /** 发动技能 */
     handleSkill(skill, index) {
-      const { name, damage, cd } = skill
+      const { name, damage, cd, audioKey } = skill
       if(name === '燃烧') {
         const e_iList = []
         for(const e_i in this.enemy) {
@@ -612,6 +624,7 @@ export default {
             }
           }
         }
+        this.playAudio(audioKey, 'Skill')
         this.removeEnemy(e_iList)
       }
       this.skillList[index].curTime = cd 
@@ -687,9 +700,12 @@ export default {
       this.proMoney.timer = setInterval(() => {
         if(!this.proMoney.isShow) {
           this.proMoney.isShow = true
-          this.playAudio('ma-qifei')
+          this.playAudio('ma-qifei', 'End')
         }
       }, this.proMoney.interval);
+      this.$once('hook:beforeDestroy', () => {
+        if(this.proMoney.timer) clearInterval(this.proMoney.timer)
+      })
     },
     /** 点击了生产出来的金钱 */
     proMoneyClick() {
@@ -743,11 +759,17 @@ export default {
       else this.$refs.audioBgRef.pause()
     },
     /** 播放音乐 */
-    playAudio(audioKey) {
-      if(this.audioKey !== audioKey) {
-        this.audioKey = audioKey
+    playAudio(audioKey, key) {
+      const audio_key = `audio${key}`
+      if(this[audio_key] === undefined) return
+      if(this[audio_key] !== audioKey) {
+        this[audio_key] = audioKey
       }
-      this.$nextTick(()=>{this.$refs.audioRef.play()})
+      this.$nextTick(()=>{
+        // 调节音量
+        this.$refs[`${audio_key}Ref`].volume = 0.9
+        this.$refs[`${audio_key}Ref`].play()
+      })
     },
     /** 单张gif转静态图片 */
     gifToStaticImg(index) {
