@@ -106,7 +106,8 @@
  */
 import Loading from './components/loading.vue'
 import SuperGif from './utils/libgif'
-import levelEnemyArr from './utils/levelEnemyArr'
+import { limitRange } from './utils/tools'
+import levelEnemyArr from './dataSource/levelEnemyArr'
 import towerData from './dataSource/towerData'
 import enemyData from './dataSource/enemyData'
 import audioData from './dataSource/audioData'
@@ -140,11 +141,11 @@ export default {
       // 生命值
       hp: 10,
       // 金钱
-      money: 50000,
+      money: 500,
       // 生产的金钱
       proMoney: {isShow: false, timer: null, interval: 10000, money: 25},
       // 敌人生成间隔时间
-      intervalTime: 300, 
+      intervalTime: 800, 
       // 存放上一次和本次生成的敌人时间戳，用于暂停判断还有多久产生敌人
       timeDiff: {curTime: 0, stopTime: 0},
       // 生成敌人的定时器
@@ -157,7 +158,7 @@ export default {
       createdEnemyNum: 0,
       // 场上的敌人数组  
       enemy: [],
-      // 偏移量y 是用来计算敌人与地板底部的距离 (两个地板(50*2)-敌人(h(75)+y(15))) = 10
+      // 偏移量y 是用来计算敌人与地板底部的距离 (两个地板(50*2)-敌人(h(75)+y(10))) = 10
       offset: {y: 10},
       // 敌人资源
       enemySource: enemyData,
@@ -251,6 +252,7 @@ export default {
           clearInterval(this.makeEnemyTimer)
           clearInterval(this.proMoney.timer)
           this.timeDiff.stopTime = Date.now()
+          this.removeEnemySkillTimer()
         } else {
           this.makeEnemy()
           this.startAnimation();
@@ -569,6 +571,9 @@ export default {
         case 4: this.enemy[index].y += curSpeed; break;
       }
       const { x: eX, y: eY } = this.enemy[index]
+      // if(this.enemy[index].name === '舞王小兵') {
+      //   console.log(eX, eY);
+      // }
       // 敌人到达下一个格子
       if((eX >= _x &&  eX <= _x + speed) && (eY >= _y &&  eY <= _y + speed)) {
         this.enemy[index].curFloorI++
@@ -594,8 +599,39 @@ export default {
     /** 生成敌人 */
     setEnemy() {
       this.timeDiff.curTime = Date.now()
-      this.enemy.push(this.$lodash.cloneDeep(this.enemySource[this.levelEnemy[this.createdEnemyNum]]))
+      const enemySourceIndex = this.levelEnemy[this.createdEnemyNum]
+      const enemyItem = this.$lodash.cloneDeep(this.enemySource[enemySourceIndex])
+      this.enemy.push(enemyItem)
       this.createdEnemyNum++
+      this.handleEnemySkill(enemySourceIndex, this.enemy.length - 1)
+    },
+    /** 敌人技能 */
+    handleEnemySkill(enemySourceIndex, e_i) {
+      // 舞王僵尸的技能
+      if(enemySourceIndex === 7) {
+        this.enemy[e_i].skill.timer = setInterval(() => {
+          const _curFloorI = this.enemy[e_i].curFloorI
+          const total = this.floorTile.num - 1
+          for(let i = 0; i < 4; i++) {
+            const newEnemy = this.$lodash.cloneDeep(this.enemySource[12])
+            switch (i) {
+              case 0: newEnemy.curFloorI = limitRange(_curFloorI - 2, 1, total); break;
+              case 1: newEnemy.curFloorI = limitRange(_curFloorI - 1, 1, total); break;
+              case 2: newEnemy.curFloorI = limitRange(_curFloorI + 1, 1, total); break;
+              case 3: newEnemy.curFloorI = limitRange(_curFloorI + 2, 1, total); break;
+            }
+            const size = this.gridInfo.size
+            const { curFloorI, w, h } = newEnemy
+            const { x, y } = this.movePath[curFloorI - 1]
+            newEnemy.x = x - (w - size)
+            newEnemy.y = y - (size - (size * 2 - h - this.offset.y))
+            this.enemy.push(newEnemy)
+          }
+        }, this.enemy[e_i].skill.time);
+        this.$once("hook:beforeDestroy", () => {
+          this.removeEnemySkillTimer(e_i)
+        })
+      }
     },
     /** 消灭敌人 */
     removeEnemy(e_iList) {
@@ -607,6 +643,21 @@ export default {
         delete this.enemy[e_i]
       }
       this.enemy = this.enemy.filter(e => e)
+    },
+    /** 清除敌人技能定时器 */
+    removeEnemySkillTimer(e_i) {
+      if(e_i) {
+        if(this.enemy[e_i]) {
+          clearInterval(this.enemy[e_i].skill.timer)
+          item.skill.timer = null
+        }
+      }
+      this.enemy.forEach(item => {
+        if(item.skill.timer) {
+          clearInterval(item.skill.timer)
+          item.skill.timer = null
+        }
+      })
     },
     /** 发动技能 */
     handleSkill(skill, index) {
