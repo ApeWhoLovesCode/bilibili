@@ -4,7 +4,6 @@
     <div id="audio-wrap">
       <audio ref="audioBgRef" :src="audioList['pvz-morning']" loop></audio>
       <audio ref="audioLevelRef" :src="audioList['pvz-comein']"></audio>
-      <audio ref="audioTowerRef" :src="audioList[audioTower]"></audio>
       <audio ref="audioSkillRef" :src="audioList[audioSkill]"></audio>
       <audio ref="audioEndRef" :src="audioList[audioEnd]"></audio>
     </div>
@@ -196,8 +195,6 @@ export default {
       audioList: audioData,
       // 终点音乐
       audioEnd: '',
-      // 塔防音乐
-      audioTower: '',
       // 当前技能音乐
       audioSkill: '',
       // 底部技能栏
@@ -380,10 +377,11 @@ export default {
     /** 售卖防御塔 */
     saleTower(index) {
       const size = this.gridInfo.size
-      const {x, y, saleMoney} = this.tower[index]
+      const {x, y, saleMoney, id} = this.tower[index]
       this.ctx.clearRect(x, y, size, size);
       this.gridInfo.arr[y / size][x / size] = 0
       this.money += saleMoney
+      this.removeAudio(id)
       this.tower.splice(index, 1)
     },
     /** 点击背景 隐藏塔防 */
@@ -616,28 +614,29 @@ export default {
       enemyItem.id = audioKey + id
       this.enemy.push(enemyItem)
       this.createdEnemyNum++
-      this.handleEnemySkill(enemyItem.name, this.enemy.length - 1)
+      this.handleEnemySkill(enemyItem.name, enemyItem.id)
       this.createAudio(audioKey, id)
     },
     /** 暂停后重新开始技能 */
     startEnemySkill() {
-      this.enemy.forEach((item, e_i) => {
-        if(item.name === '舞王') {
-          this.handleEnemySkill(item.name, e_i)
-        }
-      })
+      for(const e of this.enemy) {
+        this.handleEnemySkill(e.name, e.id)
+      }
     },
-    /** 敌人技能 */
-    handleEnemySkill(enemyName, e_i) {
+    /** 处理敌人技能 */
+    handleEnemySkill(enemyName, e_id) {
+      const e_i = this.enemy.findIndex(e => e.id === e_id)
+      if(!this.enemy[e_i].skill) return
       // 舞王僵尸的技能
       if(enemyName === '舞王') {
         const {time, curTime, stopTime} = this.enemy[e_i].skill
         const intervalTime = time - (stopTime - curTime)
         this.enemy[e_i].skill.curTime = Date.now()
         this.enemy[e_i].skill.pauseTimer = setTimeout(() => {
-          this.setEnemySkill(enemyName, e_i)
-          this.enemy[e_i].skill.timer = setInterval(() => {
-            this.setEnemySkill(enemyName, e_i)
+          this.setEnemySkill(enemyName, e_id)
+          const newE_i = this.enemy.findIndex(e => e.id === e_id)
+          this.enemy[newE_i].skill.timer = setInterval(() => {
+            this.setEnemySkill(enemyName, e_id)
           }, time);
         }, intervalTime);
         this.$once("hook:beforeDestroy", () => {
@@ -646,7 +645,9 @@ export default {
       }
     },
     /** 设置敌人技能 */
-    setEnemySkill(enemyName, e_i) {
+    setEnemySkill(enemyName, e_id) {
+      const e_i = this.enemy.findIndex(e => e.id === e_id)
+      if(!this.enemy[e_i].skill) return
       this.enemy[e_i].skill.curTime = Date.now()
       const {curFloorI: _curFloorI, id} = this.enemy[e_i]
       // 舞王僵尸技能
@@ -667,33 +668,35 @@ export default {
           newEnemy.y = y - (size - (size * 2 - h - this.offset.y))
           this.enemy.push(newEnemy)
         }
+        this.playDomAudio(id)
       }
-      this.playDomAudio(id)
     },
     /** 消灭敌人 */
     removeEnemy(e_iList) {
       e_iList.sort((a, b) => b - a)
       if(!e_iList.length) return
       for(let e_i in e_iList) {
+        // 清除减速持续时间定时器
         if(this.enemy[e_i].durationTimer) {
           clearTimeout(this.enemy[e_i].durationTimer)
         }
         this.removeEnemySkillTimer(e_i)
+        this.removeAudio(this.enemy[e_i].id)
         this.enemy.splice(e_i, 1)
       }
     },
     /** 清除敌人技能定时器 */
     removeEnemySkillTimer(e_i) {
       // 单个敌人被消灭时
-      if(e_i) {
-        if(this.enemy[e_i]) {
-          clearInterval(this.enemy[e_i].skill.timer)
+      if(e_i !== undefined) {
+        if(this.enemy[e_i] && this.enemy[e_i].skill) {
           clearTimeout(this.enemy[e_i].skill.pauseTimer)
+          clearInterval(this.enemy[e_i].skill.timer)
         }
       } else {
         // 点击暂停时
         this.enemy.forEach(item => {
-          if(item.skill.timer || item.skill.pauseTimer) {
+          if(item.skill) {
             clearInterval(item.skill.timer)
             clearTimeout(item.skill.pauseTimer)
             item.skill.timer = null
@@ -850,10 +853,19 @@ export default {
     createAudio(audioKey, id) {
       if(!this.audioList[audioKey]) return
       // var audio = new Audio()
+      const audioWrap = document.querySelector('#audio-wrap')
       const audio = document.createElement('audio') //生成一个audio元素 
       audio.src = this.audioList[audioKey]  //音乐的路径
       audio.id = audioKey + id
-      document.body.appendChild(audio)  //把它添加到页面中
+      audioWrap.appendChild(audio)  //把它添加到页面中
+    },
+    /** 清除音频播放器 */
+    removeAudio(id) {
+      // 删除该 video dom 节点
+      const videoDom = document.querySelector(`#${id}`)
+      if(videoDom) {
+        videoDom.remove()
+      }
     },
     /** 播放背景音乐 */
     playBgAudio() {
@@ -879,7 +891,9 @@ export default {
     },
     /** 播放创建出来的dom(防御塔和僵尸)的音乐 */
     playDomAudio(id) {
-      const audioDom = document.querySelector(`#${id}`)
+      console.log('id: ', id);
+      const audioWrap = document.querySelector('#audio-wrap')
+      const audioDom = audioWrap.querySelector(`#${id}`)
       audioDom.play()
     },
     /** 单张gif转静态图片 */
@@ -951,7 +965,7 @@ export default {
     /** 开始游戏 */
     beginGame() {
       this.$refs.audioLevelRef.play()
-      this.playBgAudio()
+      // this.playBgAudio()
       this.isGameBeginMask = false
       this.isPause = false
       this.$message({type: 'success', message: '点击右上方按钮或按空格键开始 / 暂停游戏', duration: 2500, showClose: true})
