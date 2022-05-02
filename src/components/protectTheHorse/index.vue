@@ -17,6 +17,7 @@
               <span class="iconfont icon-jinbi1"></span>
             </span>
             <span class="money">{{money}}</span>
+            <span v-if="addMoney.num" class="add-money">{{addMoney.num}}</span>
           </div>
           <div class="center">
             <span class="level fff-color">{{level + 1}}</span> 
@@ -144,6 +145,8 @@ export default {
       hp: 10,
       // 金钱
       money: 5000,
+      // 增加的金钱
+      addMoney: {num: '', timer: null, time: 1000},
       // 生产的金钱
       proMoney: {isShow: false, timer: null, interval: 10000, money: 25},
       // 敌人生成间隔时间
@@ -190,6 +193,7 @@ export default {
       towerBulletOnloadImg: null,
       // 场上的防御塔数组 {x, y, shootFn(防抖的射击函数), targetIndexList(攻击的目标):[], bulletArr(子弹数组)[x,y(子弹当前位置),addX,addY(往目标方向增加的值),xy(当前距离),x_y(目标距离),e_i(目标索引)], ...this.towerList[i], onload-img, onload-bulletImg
       tower: [],
+      // 是否播放背景音乐
       isPlayBgAudio: false,
       // 所有音乐数据
       audioList: audioData,
@@ -232,9 +236,22 @@ export default {
       const size = this.gridInfo.size / 2
       const {left, top, r} = this.buildingScope
       return {left: left + padding + size + 'px', top: top + padding + size + 'px', width: r * 2 + 'px', height: r * 2 + 'px'}
-    }
+    },
   },
   watch: {
+    // 监听增加的钱
+    money(newVal, oldVal) {
+      this.addMoney.num = ''
+      clearTimeout(this.addMoney.timer)
+      this.addMoney.timer = null
+      this.$nextTick(() => {
+        const val = newVal - oldVal
+        this.addMoney.num = (val >= 0 ? '+' : '') + val
+        this.addMoney.timer = setTimeout(() => {
+          this.addMoney.num = ''
+        }, this.addMoney.time);
+      })
+    },
     // 游戏结束判断
     hp(val) {
       if(!val) {
@@ -267,7 +284,6 @@ export default {
       handler(val) {
         setTimeout(() => {
           this.createdEnemyNum = 0
-          this.money += this.proMoney.money * (this.level + 1)
           if(val < levelEnemyArr.length) {
             if(val && (val / 10) % 1 === 0) {
               clearInterval(this.proMoney.timer)
@@ -283,6 +299,7 @@ export default {
             this.levelEnemy = list
           }
           if(val) {
+            this.money += this.proMoney.money * (this.level + 1)
             this.makeEnemy()
             this.$refs.audioLevelRef.play()
           }
@@ -307,7 +324,7 @@ export default {
           }
         }
       }
-    }
+    },
   },
   mounted() {
     this.init();
@@ -315,7 +332,7 @@ export default {
     // 监听浏览器窗口大小变化
     window.addEventListener("resize", this.getCanvasMargin);
   },
-  destroyed() {
+  beforeDestroy() {
     window.removeEventListener('resize', this.getCanvasMargin)
   },
   methods: {
@@ -1050,6 +1067,7 @@ export default {
         box-shadow: -7px 4px 14px #1781c2;
         user-select: none;
         .left {
+          position: relative;
           .icon-wrap {
             display: inline-block;
             width: 30px;
@@ -1069,6 +1087,31 @@ export default {
             font-size: 16px;
             font-weight: bold;
             color: @fontColor;
+          }
+          .add-money {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            color: @fontColor;
+            font-weight: bold;
+            margin-left: 6px;
+            opacity: 0;
+            animation: add-money 0.6s ease;
+          }
+          @keyframes add-money {
+            0% {
+              right: -30px;
+              opacity: 0;
+            }
+            50% {
+              right: -35px;
+              opacity: 1;
+            }
+            100% {
+              right: -40px;
+              opacity: 0;
+            }
           }
         }
         .center {
