@@ -1,10 +1,13 @@
 <template>
   <div id="protect-horse">
     <div class="back" @click="$router.push('/')">回到首页</div>
-    <audio ref="audioBgRef" :src="audioList['pvz-morning']" loop></audio>
-    <audio ref="audioTowerRef" :src="audioList[audioTower]"></audio>
-    <audio ref="audioSkillRef" :src="audioList[audioSkill]"></audio>
-    <audio ref="audioEndRef" :src="audioList[audioEnd]"></audio>
+    <div id="audio-wrap">
+      <audio ref="audioBgRef" :src="audioList['pvz-morning']" loop></audio>
+      <audio ref="audioLevelRef" :src="audioList['pvz-comein']"></audio>
+      <audio ref="audioTowerRef" :src="audioList[audioTower]"></audio>
+      <audio ref="audioSkillRef" :src="audioList[audioSkill]"></audio>
+      <audio ref="audioEndRef" :src="audioList[audioEnd]"></audio>
+    </div>
     <div class="game-wrap">
       <div class="title">{{title}}</div>
       <div class="canvas-wrap" @click="hiddenTowerOperation">
@@ -141,7 +144,7 @@ export default {
       // 生命值
       hp: 10,
       // 金钱
-      money: 500,
+      money: 5000,
       // 生产的金钱
       proMoney: {isShow: false, timer: null, interval: 10000, money: 25},
       // 敌人生成间隔时间
@@ -257,6 +260,7 @@ export default {
           this.makeEnemy()
           this.startAnimation();
           this.startMoneyTimer()
+          this.startEnemySkill()
         }
       }
     },
@@ -281,7 +285,10 @@ export default {
             }
             this.levelEnemy = list
           }
-          if(val) this.makeEnemy()
+          if(val) {
+            this.makeEnemy()
+            this.$refs.audioLevelRef.play()
+          }
         }, val ? 500 : 0);
       },
     },
@@ -351,7 +358,7 @@ export default {
     },
     /** 点击建造塔防 */
     buildTower(index) {
-      const { rate, money } = this.towerList[index]
+      const { rate, money, name, audioKey } = this.towerList[index]
       if(this.money < money) return
       this.money -= money
       const {left: x, top: y} = this.building
@@ -361,11 +368,14 @@ export default {
       const shootFun = this.$lodash.throttle((eIndexlist, t_i) => {
         this.shootBullet(eIndexlist, t_i)
       }, rate, { leading: true, trailing: false })
-      const tower = {x, y, shootFun, targetIndexList: [], bulletArr: [], ...this.towerList[index], img: this.towerOnloadImg[index], bulletImg: this.towerBulletOnloadImg[index]}
+      // 处理多个相同塔防的id值
+      const id = this.tower.reduce((pre, cur) => cur.name === name ? ++pre : pre, 0)
+      const tower = {x, y, id: audioKey + id, shootFun, targetIndexList: [], bulletArr: [], ...this.towerList[index], img: this.towerOnloadImg[index], bulletImg: this.towerBulletOnloadImg[index]}
       this.tower.push(tower)
       // 用于标记是哪个塔防 10 + index
       this.gridInfo.arr[y / size][x / size] = 10 + index
       this.drawTower(tower)
+      this.createAudio(audioKey, id)
     },
     /** 售卖防御塔 */
     saleTower(index) {
@@ -482,7 +492,8 @@ export default {
                 this.removeEnemy([e_i])
                 t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === +e_i), 1)
                 if(t.name === '茄子') {
-                  this.playAudio('qizi-wujie', 'Tower')
+                  // this.playAudio('qizi-wujie', 'Tower')
+                  this.playDomAudio(t.id)
                 }
               } else {
                 // 判断减速
@@ -599,65 +610,97 @@ export default {
     /** 生成敌人 */
     setEnemy() {
       this.timeDiff.curTime = Date.now()
-      const enemySourceIndex = this.levelEnemy[this.createdEnemyNum]
-      const enemyItem = this.$lodash.cloneDeep(this.enemySource[enemySourceIndex])
+      const enemyItem = this.$lodash.cloneDeep(this.enemySource[this.levelEnemy[this.createdEnemyNum]])
+      const {audioKey, name} = enemyItem
+      const id = this.enemy.reduce((pre, cur) => cur.name === name ? ++pre : pre, 0)
+      enemyItem.id = audioKey + id
       this.enemy.push(enemyItem)
       this.createdEnemyNum++
-      this.handleEnemySkill(enemySourceIndex, this.enemy.length - 1)
+      this.handleEnemySkill(enemyItem.name, this.enemy.length - 1)
+      this.createAudio(audioKey, id)
+    },
+    /** 暂停后重新开始技能 */
+    startEnemySkill() {
+      this.enemy.forEach((item, e_i) => {
+        if(item.name === '舞王') {
+          this.handleEnemySkill(item.name, e_i)
+        }
+      })
     },
     /** 敌人技能 */
-    handleEnemySkill(enemySourceIndex, e_i) {
+    handleEnemySkill(enemyName, e_i) {
       // 舞王僵尸的技能
-      if(enemySourceIndex === 7) {
-        this.enemy[e_i].skill.timer = setInterval(() => {
-          const _curFloorI = this.enemy[e_i].curFloorI
-          const total = this.floorTile.num - 1
-          for(let i = 0; i < 4; i++) {
-            const newEnemy = this.$lodash.cloneDeep(this.enemySource[12])
-            switch (i) {
-              case 0: newEnemy.curFloorI = limitRange(_curFloorI - 2, 1, total); break;
-              case 1: newEnemy.curFloorI = limitRange(_curFloorI - 1, 1, total); break;
-              case 2: newEnemy.curFloorI = limitRange(_curFloorI + 1, 1, total); break;
-              case 3: newEnemy.curFloorI = limitRange(_curFloorI + 2, 1, total); break;
-            }
-            const size = this.gridInfo.size
-            const { curFloorI, w, h } = newEnemy
-            const { x, y } = this.movePath[curFloorI - 1]
-            newEnemy.x = x - (w - size)
-            newEnemy.y = y - (size - (size * 2 - h - this.offset.y))
-            this.enemy.push(newEnemy)
-          }
-        }, this.enemy[e_i].skill.time);
+      if(enemyName === '舞王') {
+        const {time, curTime, stopTime} = this.enemy[e_i].skill
+        const intervalTime = time - (stopTime - curTime)
+        this.enemy[e_i].skill.curTime = Date.now()
+        this.enemy[e_i].skill.pauseTimer = setTimeout(() => {
+          this.setEnemySkill(enemyName, e_i)
+          this.enemy[e_i].skill.timer = setInterval(() => {
+            this.setEnemySkill(enemyName, e_i)
+          }, time);
+        }, intervalTime);
         this.$once("hook:beforeDestroy", () => {
           this.removeEnemySkillTimer(e_i)
         })
       }
     },
+    /** 设置敌人技能 */
+    setEnemySkill(enemyName, e_i) {
+      this.enemy[e_i].skill.curTime = Date.now()
+      const {curFloorI: _curFloorI, id} = this.enemy[e_i]
+      // 舞王僵尸技能
+      if(enemyName === '舞王') {
+        const total = this.floorTile.num - 1
+        for(let i = 0; i < 4; i++) {
+          const newEnemy = this.$lodash.cloneDeep(this.enemySource[12])
+          switch (i) {
+            case 0: newEnemy.curFloorI = limitRange(_curFloorI - 2, 1, total); break;
+            case 1: newEnemy.curFloorI = limitRange(_curFloorI - 1, 1, total); break;
+            case 2: newEnemy.curFloorI = limitRange(_curFloorI + 1, 1, total); break;
+            case 3: newEnemy.curFloorI = limitRange(_curFloorI + 2, 1, total); break;
+          }
+          const size = this.gridInfo.size
+          const { curFloorI, w, h } = newEnemy
+          const { x, y } = this.movePath[curFloorI - 1]
+          newEnemy.x = x - (w - size)
+          newEnemy.y = y - (size - (size * 2 - h - this.offset.y))
+          this.enemy.push(newEnemy)
+        }
+      }
+      this.playDomAudio(id)
+    },
     /** 消灭敌人 */
     removeEnemy(e_iList) {
+      e_iList.sort((a, b) => b - a)
       if(!e_iList.length) return
       for(let e_i in e_iList) {
         if(this.enemy[e_i].durationTimer) {
           clearTimeout(this.enemy[e_i].durationTimer)
         }
-        delete this.enemy[e_i]
+        this.removeEnemySkillTimer(e_i)
+        this.enemy.splice(e_i, 1)
       }
-      this.enemy = this.enemy.filter(e => e)
     },
     /** 清除敌人技能定时器 */
     removeEnemySkillTimer(e_i) {
+      // 单个敌人被消灭时
       if(e_i) {
         if(this.enemy[e_i]) {
           clearInterval(this.enemy[e_i].skill.timer)
-          item.skill.timer = null
+          clearTimeout(this.enemy[e_i].skill.pauseTimer)
         }
+      } else {
+        // 点击暂停时
+        this.enemy.forEach(item => {
+          if(item.skill.timer || item.skill.pauseTimer) {
+            clearInterval(item.skill.timer)
+            clearTimeout(item.skill.pauseTimer)
+            item.skill.timer = null
+            item.skill.stopTime = Date.now()
+          }
+        })
       }
-      this.enemy.forEach(item => {
-        if(item.skill.timer) {
-          clearInterval(item.skill.timer)
-          item.skill.timer = null
-        }
-      })
     },
     /** 发动技能 */
     handleSkill(skill, index) {
@@ -803,10 +846,22 @@ export default {
     powAndSqrt(val1, val2) {
       return Math.sqrt(Math.pow(val1, 2) + Math.pow(val2, 2))
     },
+    /** 生成音频播放器 */
+    createAudio(audioKey, id) {
+      if(!this.audioList[audioKey]) return
+      // var audio = new Audio()
+      const audio = document.createElement('audio') //生成一个audio元素 
+      audio.src = this.audioList[audioKey]  //音乐的路径
+      audio.id = audioKey + id
+      document.body.appendChild(audio)  //把它添加到页面中
+    },
     /** 播放背景音乐 */
     playBgAudio() {
       this.isPlayBgAudio = !this.isPlayBgAudio
-      if(this.isPlayBgAudio) this.$refs.audioBgRef.play()
+      if(this.isPlayBgAudio) {
+        this.$refs.audioBgRef.volume = 0.65
+        this.$refs.audioBgRef.play()
+      }
       else this.$refs.audioBgRef.pause()
     },
     /** 播放音乐 */
@@ -821,6 +876,11 @@ export default {
         this.$refs[`${audio_key}Ref`].volume = 0.9
         this.$refs[`${audio_key}Ref`].play()
       })
+    },
+    /** 播放创建出来的dom(防御塔和僵尸)的音乐 */
+    playDomAudio(id) {
+      const audioDom = document.querySelector(`#${id}`)
+      audioDom.play()
     },
     /** 单张gif转静态图片 */
     gifToStaticImg(index) {
@@ -890,6 +950,7 @@ export default {
     },
     /** 开始游戏 */
     beginGame() {
+      this.$refs.audioLevelRef.play()
       this.playBgAudio()
       this.isGameBeginMask = false
       this.isPause = false
