@@ -424,7 +424,7 @@ export default {
         const {x, y, w, h} = this.enemy[e_i]
         // 敌人中心坐标
         const _x = x + w / 2, _y = y + h / 2
-        const {x: t_x, y: t_y, speed } = this.tower[t_i]
+        const {x: t_x, y: t_y, speed, name, id } = this.tower[t_i]
         const size_2 = this.gridInfo.size / 2
         // 子弹初始坐标
         const begin = {x: t_x + size_2, y: t_y + size_2}
@@ -435,6 +435,9 @@ export default {
         const addX = speed * diff.x / distance, addY = speed * diff.y / distance
         const bullet = {x: begin.x, y: begin.y, addX, addY, xy: 0, x_y: distance, e_i}
         this.tower[t_i].bulletArr.push(bullet)
+        if(name === 'PDD') {
+          this.playDomAudio(id, 0.5)
+        }
       }
     },
     /** 开启动画绘画 */
@@ -907,11 +910,11 @@ export default {
       })
     },
     /** 播放创建出来的dom(防御塔和僵尸)的音乐 */
-    playDomAudio(id) {
-      console.log('id: ', id);
+    playDomAudio(id, volume) {
       const audioWrap = document.querySelector('#audio-wrap')
       const audioDom = audioWrap.querySelector(`#${id}`)
       audioDom.play()
+      audioDom.volume = volume || 1
     },
     /** 单张gif转静态图片 */
     gifToStaticImg(index) {
@@ -982,7 +985,7 @@ export default {
     /** 开始游戏 */
     beginGame() {
       this.$refs.audioLevelRef.play()
-      // this.playBgAudio()
+      this.playBgAudio()
       this.isGameBeginMask = false
       this.isPause = false
       this.$message({type: 'success', message: '点击右上方按钮或按空格键开始 / 暂停游戏', duration: 2500, showClose: true})

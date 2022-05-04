@@ -10,4 +10,5 @@ export default {
   'ma-nansou': require("../assets/audio/ma-nansou.wav"),
   'ma-zhata': require("../assets/audio/ma-zhata.wav"),
   'qizi-wujie': require("../assets/audio/qizi-wujie.mp3"),
+  'pdd-heihei': require("../assets/audio/pdd-heihaha.wav"),
 }
