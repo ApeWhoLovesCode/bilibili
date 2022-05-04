@@ -43,18 +43,6 @@
             </el-tooltip>
           </div>
         </div>
-        <!-- 游戏底部技能区 -->
-        <div class="skill-wrap">
-          <span v-for="(item, index) in skillList" :key="index">
-            <el-tooltip effect="dark" :content="item.name" placement="top">
-              <span class="skill-item">
-                <span class="skill iconfont" :class="item.icon" @click="handleSkill(item, index)"></span>
-                <!-- <span class="skill-disable iconfont icon-disablecase"></span> -->
-                <span v-show="item.curTime" class="skill-disable skill-time">{{item.curTime / 1000}}</span>
-              </span>
-            </el-tooltip>
-          </span>
-        </div>
         <!-- 游戏区域 -->
         <canvas ref="canvasRef" id="mycanvas" width="1050" height="600" @click="getMouse($event)"></canvas>
         <!-- 塔防的容器 -->
@@ -75,6 +63,24 @@
             <span class="sale-num">{{tower[buildingScope.towerIndex] && tower[buildingScope.towerIndex].saleMoney}}</span>
           </span>
         </div>
+        <!-- 游戏底部技能区 -->
+        <div class="skill-wrap">
+          <span v-for="(item, index) in skillList" :key="index">
+            <el-tooltip effect="dark" placement="top">
+              <div slot="content" style="text-align: center">
+                <div>{{item.name}}</div>
+                <div>金额：{{item.money}}</div>
+              </div>
+              <span class="skill-item">
+                <span class="skill iconfont" :class="item.icon" @click="handleSkill(index)"></span>
+                <!-- <span class="skill-disable iconfont icon-disablecase"></span> -->
+                <span v-show="item.curTime" class="skill-disable skill-time">{{item.curTime / 1000}}</span>
+              </span>
+            </el-tooltip>
+          </span>
+        </div>
+        <!-- 技能: 肉弹冲击 -->
+        <img v-if="skillList[1].isShow" class="skill-rush" src="./assets/img/meat-rush.png" alt="">
         <!-- 终点 -->
         <div class="terminal">
           <div class="hp">{{hp}}</div>
@@ -106,10 +112,11 @@
 /**
  * 必要优化-待完成
  * 1.子弹提前预判敌人位置
+ * 2.群体伤害时清除错怪了
  */
 import Loading from './components/loading.vue'
 import SuperGif from './utils/libgif'
-import { limitRange } from './utils/tools'
+import { limitRange, randomNum } from './utils/tools'
 import levelEnemyArr from './dataSource/levelEnemyArr'
 import towerData from './dataSource/towerData'
 import enemyData from './dataSource/enemyData'
@@ -144,7 +151,7 @@ export default {
       // 生命值
       hp: 10,
       // 金钱
-      money: 5000,
+      money: 60000,
       // 增加的金钱
       addMoney: {num: '', timer: null, time: 1000},
       // 生产的金钱
@@ -257,6 +264,8 @@ export default {
       if(!val) {
         this.isGameOver = true
         this.isPause = true
+        this.playAudio('ma-gameover', 'Skill')
+        this.$refs.audioBgRef.pause()
       }
     },
     // 暂停的判断
@@ -293,8 +302,9 @@ export default {
             this.levelEnemy = levelEnemyArr[val]
           } else {
             const list = [0]
+            const num = randomNum(1, 100)
             for(let i = 0; i < val; i++) {
-              list.push(11)
+              list.push(num > 3 ? 11 : 14)
             }
             this.levelEnemy = list
           }
@@ -525,12 +535,11 @@ export default {
         }
       }
     },
-    /** 减速敌人 */
+    /** 减速敌人 t_slow: {num: 减速倍速(当为0时无法动), time: 持续时间} */
     slowEnemy(e_i, t_slow) {
-      const { speed: e_speed } = this.enemy[e_i]
-      if(this.enemy[e_i].curSpeed === e_speed) {
-        this.enemy[e_i].curSpeed = e_speed / t_slow.num
-      }
+      const { speed: e_speed, curSpeed } = this.enemy[e_i]
+      // 当前已经被眩晕了不能减速了
+      if(curSpeed === 0) return
       if(this.enemy[e_i].durationTimer) {
         clearTimeout(this.enemy[e_i].durationTimer)
         this.enemy[e_i].durationTimer = setTimeout(() => {
@@ -544,6 +553,9 @@ export default {
             this.enemy[e_i].curSpeed = this.enemy[e_i].speed
           }, t_slow.time)
         )
+      }
+      if(this.enemy[e_i].curSpeed === e_speed) {
+        this.enemy[e_i].curSpeed = t_slow.num ? e_speed / t_slow.num : t_slow.num
       }
     },
     /** 画敌人 */
@@ -647,29 +659,28 @@ export default {
     handleEnemySkill(enemyName, e_id) {
       const e_i = this.enemy.findIndex(e => e.id === e_id)
       if(!this.enemy[e_i].skill) return
-      // 舞王僵尸的技能
-      if(enemyName === '舞王') {
-        const {time, curTime, stopTime} = this.enemy[e_i].skill
-        const intervalTime = time - (stopTime - curTime)
-        this.enemy[e_i].skill.curTime = Date.now()
-        this.enemy[e_i].skill.pauseTimer = setTimeout(() => {
+      // 有技能的敌人
+      const {time, curTime, stopTime} = this.enemy[e_i].skill
+      const intervalTime = time - (stopTime - curTime)
+      this.enemy[e_i].skill.curTime = Date.now()
+      this.enemy[e_i].skill.pauseTimer = setTimeout(() => {
+        this.setEnemySkill(enemyName, e_id)
+        const newE_i = this.enemy.findIndex(e => e.id === e_id)
+        this.enemy[newE_i].skill.timer = setInterval(() => {
           this.setEnemySkill(enemyName, e_id)
-          const newE_i = this.enemy.findIndex(e => e.id === e_id)
-          this.enemy[newE_i].skill.timer = setInterval(() => {
-            this.setEnemySkill(enemyName, e_id)
-          }, time);
-        }, intervalTime);
-        this.$once("hook:beforeDestroy", () => {
-          this.removeEnemySkillTimer(e_i)
-        })
-      }
+        }, time);
+      }, intervalTime);
+      this.$once("hook:beforeDestroy", () => {
+        this.removeEnemySkillTimer(e_i)
+      })
+      
     },
     /** 设置敌人技能 */
     setEnemySkill(enemyName, e_id) {
       const e_i = this.enemy.findIndex(e => e.id === e_id)
       if(!this.enemy[e_i].skill) return
       this.enemy[e_i].skill.curTime = Date.now()
-      const {curFloorI: _curFloorI, id} = this.enemy[e_i]
+      const {curFloorI: _curFloorI, id, hp} = this.enemy[e_i]
       // 舞王僵尸技能
       if(enemyName === '舞王') {
         const total = this.floorTile.num - 1
@@ -688,8 +699,11 @@ export default {
           newEnemy.y = y - (size - (size * 2 - h - this.offset.y))
           this.enemy.push(newEnemy)
         }
-        this.playDomAudio(id)
+      } else if(enemyName === '坤坤') {
+        const newHp = hp.cur + 100
+        this.enemy[e_i].hp.cur = limitRange(newHp, newHp, hp.sum)
       }
+      this.playDomAudio(id)
     },
     /** 消灭敌人 */
     removeEnemy(e_iList) {
@@ -726,9 +740,9 @@ export default {
       }
     },
     /** 发动技能 */
-    handleSkill(skill, index) {
-      const { name, damage, cd, audioKey } = skill
-      if(name === '燃烧') {
+    handleSkill(index) {
+      const { name, damage, cd, audioKey, showTime } = this.skillList[index]
+      if(name !== '礼物') {
         const e_iList = []
         for(const e_i in this.enemy) {
           this.enemy[e_i].hp.cur -= damage
@@ -740,10 +754,21 @@ export default {
               t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === +e_i), 1)
             }
           }
+          if(name === "肉弹冲击") {
+            this.slowEnemy(e_i, {num: 0, time: 6000})
+          }
         }
-        this.playAudio(audioKey, 'Skill')
         this.removeEnemy(e_iList)
+      } else {
+        this.money += randomNum(1, 100)
       }
+      this.playAudio(audioKey, 'Skill')
+      // 显示技能效果
+      this.skillList[index].isShow = true
+      setTimeout(() => {
+        this.skillList[index].isShow = false
+      }, showTime);
+      // 技能进入cd
       this.skillList[index].curTime = cd 
       this.skillList[index].timer = setInterval(() => {
         this.skillList[index].curTime -= 1000
@@ -1022,6 +1047,7 @@ export default {
     border-radius: 8px;
     cursor: pointer;
     font-size: 15px;
+    user-select: none;
     &:hover {
       opacity: .8;
     }
@@ -1047,6 +1073,7 @@ export default {
       line-height: 30px;
       color: #eee;
       text-align: center;
+      user-select: none;
     }
     .canvas-wrap {
       position: relative;
@@ -1219,6 +1246,27 @@ export default {
             color: #888;
             font-weight: bold;
           }
+        }
+      }
+      .skill-rush {
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 500px;
+        animation: skill-rush 2s linear forwards;
+      }
+      @keyframes skill-rush {
+        0% {
+          left: 0;
+        }
+        25% {
+          left: 50%;
+        }
+        75% {
+          left: 55%;
+        }
+        100% {
+          left: 150%;
         }
       }
       .building-wrap {
