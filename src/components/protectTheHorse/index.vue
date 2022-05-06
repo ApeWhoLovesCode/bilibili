@@ -330,7 +330,7 @@ export default {
           const eIndexlist = this.enterAttackScopeList(enemyList, tower[t_i])
           // 进入攻击范围，开始射击 
           if(eIndexlist.length) {
-            tower[t_i].shootFun(eIndexlist.splice(0, tower[t_i].targetNum), t_i)
+            tower[t_i].shootFun(eIndexlist.slice(0, tower[t_i].targetNum), t_i)
           }
         }
       }
@@ -498,6 +498,7 @@ export default {
     },
     /** 画并处理子弹 */
     drawAndMoveBullet() {
+      const e_iList = []
       for(const t of this.tower) {
         for(const b_i in t.bulletArr) {
           const {w, h} = t.bSize
@@ -514,10 +515,9 @@ export default {
             // 敌人扣血
             if(this.enemy[e_i]) {
               this.enemy[e_i].hp.cur -= t.damage
-              // 消灭敌人
               if(this.enemy[e_i].hp.cur <= 0) {
                 this.money += this.enemy[e_i].reward
-                this.removeEnemy([e_i])
+                e_iList.push(e_i)
                 t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === +e_i), 1)
                 if(t.name === '茄子') {
                   // this.playAudio('qizi-wujie', 'Tower')
@@ -533,6 +533,10 @@ export default {
 
           }
         }
+      }
+      // 消灭敌人
+      if(e_iList.length) {
+        this.removeEnemy(e_iList)
       }
     },
     /** 减速敌人 t_slow: {num: 减速倍速(当为0时无法动), time: 持续时间} */
@@ -707,9 +711,9 @@ export default {
     },
     /** 消灭敌人 */
     removeEnemy(e_iList) {
-      e_iList.sort((a, b) => b - a)
       if(!e_iList.length) return
-      for(let e_i in e_iList) {
+      e_iList.sort((a, b) => b - a)
+      for(const e_i of e_iList) {
         // 清除减速持续时间定时器
         if(this.enemy[e_i].durationTimer) {
           clearTimeout(this.enemy[e_i].durationTimer)
