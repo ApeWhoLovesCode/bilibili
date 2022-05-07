@@ -151,7 +151,7 @@ export default {
       // 生命值
       hp: 10,
       // 金钱
-      money: 60000,
+      money: 600,
       // 增加的金钱
       addMoney: {num: '', timer: null, time: 1000},
       // 生产的金钱
@@ -327,10 +327,10 @@ export default {
         }
         const tower = this.tower
         for(let t_i in tower) {
-          const eIndexlist = this.enterAttackScopeList(enemyList, tower[t_i])
+          const eIdList = this.enterAttackScopeList(enemyList, tower[t_i])
           // 进入攻击范围，开始射击 
-          if(eIndexlist.length) {
-            tower[t_i].shootFun(eIndexlist.slice(0, tower[t_i].targetNum), t_i)
+          if(eIdList.length) {
+            tower[t_i].shootFun(eIdList.slice(0, tower[t_i].targetNum), t_i)
           }
         }
       }
@@ -389,8 +389,8 @@ export default {
       const size = this.gridInfo.size
       // 将该塔防数据放入场上塔防数组中
       // 射击的防抖函数
-      const shootFun = this.$lodash.throttle((eIndexlist, t_i) => {
-        this.shootBullet(eIndexlist, t_i)
+      const shootFun = this.$lodash.throttle((eIdList, t_i) => {
+        this.shootBullet(eIdList, t_i)
       }, rate, { leading: true, trailing: false })
       // 处理多个相同塔防的id值
       const id = this.tower.reduce((pre, cur) => cur.name === name ? ++pre : pre, 0)
@@ -423,15 +423,15 @@ export default {
       const {x:left, y:top, r} = this.tower[towerIndex]
       // 展示攻击范围
       this.buildingScope = {isShow: true, left, top, r, towerIndex}
-      // this.drawAttackScope(tower)
     },
     /** 发射子弹  enemy:敌人索引数组，t_i:塔索引 */
-    shootBullet(eIndexlist, t_i) {
+    shootBullet(eIdList, t_i) {
       // 添加攻击目标的索引
-      this.tower[t_i].targetIndexList = eIndexlist
-      for(const e_i of eIndexlist) {
-        if(!this.enemy[e_i]) break
-        const {x, y, w, h} = this.enemy[e_i]
+      this.tower[t_i].targetIndexList = eIdList
+      for(const e_id of eIdList) {
+        const enemy = this.enemy.find(e => e.id === e_id)
+        if(!enemy) break
+        const {x, y, w, h} = enemy
         // 敌人中心坐标
         const _x = x + w / 2, _y = y + h / 2
         const {x: t_x, y: t_y, speed, name, id } = this.tower[t_i]
@@ -443,7 +443,7 @@ export default {
         // 子弹和敌人的距离
         const distance = this.powAndSqrt(diff.x, diff.y)
         const addX = speed * diff.x / distance, addY = speed * diff.y / distance
-        const bullet = {x: begin.x, y: begin.y, addX, addY, xy: 0, x_y: distance, e_i}
+        const bullet = {x: begin.x, y: begin.y, addX, addY, xy: 0, x_y: distance, e_id}
         this.tower[t_i].bulletArr.push(bullet)
         if(name === 'PDD') {
           this.playDomAudio(id, 0.5)
@@ -498,7 +498,7 @@ export default {
     },
     /** 画并处理子弹 */
     drawAndMoveBullet() {
-      const e_iList = []
+      const e_idList = []
       for(const t of this.tower) {
         for(const b_i in t.bulletArr) {
           const {w, h} = t.bSize
@@ -509,16 +509,17 @@ export default {
           t.bulletArr[b_i].xy += t.speed
           // 子弹击中敌人
           if(t.bulletArr[b_i].xy >= x_y) {
-            const {e_i} = t.bulletArr[b_i]
+            const {e_id} = t.bulletArr[b_i]
             // 清除子弹
             t.bulletArr.splice(b_i, 1)
             // 敌人扣血
-            if(this.enemy[e_i]) {
-              this.enemy[e_i].hp.cur -= t.damage
-              if(this.enemy[e_i].hp.cur <= 0) {
-                this.money += this.enemy[e_i].reward
-                e_iList.push(e_i)
-                t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === +e_i), 1)
+            const enemy = this.enemy.find(e => e.id === e_id)
+            if(enemy) {
+              enemy.hp.cur -= t.damage
+              if(enemy.hp.cur <= 0) {
+                this.money += enemy.reward
+                e_idList.push(e_id)
+                t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === e_id), 1)
                 if(t.name === '茄子') {
                   // this.playAudio('qizi-wujie', 'Tower')
                   this.playDomAudio(t.id)
@@ -526,7 +527,7 @@ export default {
               } else {
                 // 判断减速
                 if(t.slow) {
-                  this.slowEnemy(e_i, t.slow)
+                  this.slowEnemy(e_id, t.slow)
                 }
               }
             }
@@ -535,26 +536,29 @@ export default {
         }
       }
       // 消灭敌人
-      if(e_iList.length) {
-        this.removeEnemy(e_iList)
+      if(e_idList.length) {
+        this.removeEnemy(e_idList)
       }
     },
     /** 减速敌人 t_slow: {num: 减速倍速(当为0时无法动), time: 持续时间} */
-    slowEnemy(e_i, t_slow) {
+    slowEnemy(e_id, t_slow) {
+      const e_i = this.enemy.findIndex(e => e.id === e_id)
       const { speed: e_speed, curSpeed } = this.enemy[e_i]
       // 当前已经被眩晕了不能减速了
       if(curSpeed === 0) return
       if(this.enemy[e_i].durationTimer) {
         clearTimeout(this.enemy[e_i].durationTimer)
         this.enemy[e_i].durationTimer = setTimeout(() => {
-          if(this.enemy[e_i]) {
-            this.enemy[e_i].curSpeed = this.enemy[e_i].speed
+          const newE_i = this.enemy.findIndex(e => e.id === e_id)
+          if(this.enemy[newE_i]) {
+            this.enemy[newE_i].curSpeed = e_speed
           }
         }, t_slow.time)
       } else {
         this.$set(this.enemy[e_i], "durationTimer", 
           setTimeout(() => {
-            this.enemy[e_i].curSpeed = this.enemy[e_i].speed
+            const newE_i = this.enemy.findIndex(e => e.id === e_id)
+            this.enemy[newE_i].curSpeed = e_speed
           }, t_slow.time)
         )
       }
@@ -595,10 +599,10 @@ export default {
     },
     /** 敌人移动 */
     moveEnemy(index) {
-      const { w, h, curSpeed, speed, curFloorI } = this.enemy[index]
+      const { w, h, curSpeed, speed, curFloorI, id } = this.enemy[index]
       // 敌人到达终点
       if(curFloorI === this.floorTile.num - 1) {
-        this.removeEnemy([index])
+        this.removeEnemy([id])
         this.hp -= 1
         this.playAudio('ma-nansou', 'End')
         return true
@@ -616,9 +620,6 @@ export default {
         case 4: this.enemy[index].y += curSpeed; break;
       }
       const { x: eX, y: eY } = this.enemy[index]
-      // if(this.enemy[index].name === '舞王小兵') {
-      //   console.log(eX, eY);
-      // }
       // 敌人到达下一个格子
       if((eX >= _x &&  eX <= _x + speed) && (eY >= _y &&  eY <= _y + speed)) {
         this.enemy[index].curFloorI++
@@ -696,12 +697,17 @@ export default {
             case 2: newEnemy.curFloorI = limitRange(_curFloorI + 1, 1, total); break;
             case 3: newEnemy.curFloorI = limitRange(_curFloorI + 2, 1, total); break;
           }
-          const size = this.gridInfo.size
-          const { curFloorI, w, h } = newEnemy
-          const { x, y } = this.movePath[curFloorI - 1]
-          newEnemy.x = x - (w - size)
-          newEnemy.y = y - (size - (size * 2 - h - this.offset.y))
-          this.enemy.push(newEnemy)
+          this.enemy.push(this.callEnemy(newEnemy))
+        }
+      } else if(enemyName === '弗利萨') {
+        const total = this.floorTile.num - 1
+        for(let i = 0; i < 2; i++) {
+          const newEnemy = this.$lodash.cloneDeep(this.enemySource[13])
+          switch (i) {
+            case 0: newEnemy.curFloorI = limitRange(_curFloorI - 2, 1, total); break;
+            case 1: newEnemy.curFloorI = limitRange(_curFloorI - 1, 1, total); break;
+          }
+          this.enemy.push(this.callEnemy(newEnemy))
         }
       } else if(enemyName === '坤坤') {
         const newHp = hp.cur + 100
@@ -709,11 +715,21 @@ export default {
       }
       this.playDomAudio(id)
     },
+    /** 召唤敌人的处理 */
+    callEnemy(newEnemy) {
+      const size = this.gridInfo.size
+      const { curFloorI, w, h } = newEnemy
+      const { x, y } = this.movePath[curFloorI - 1]
+      newEnemy.x = x - (w - size)
+      newEnemy.y = y - (size - (size * 2 - h - this.offset.y))
+      return newEnemy
+    },
     /** 消灭敌人 */
-    removeEnemy(e_iList) {
-      if(!e_iList.length) return
-      e_iList.sort((a, b) => b - a)
-      for(const e_i of e_iList) {
+    removeEnemy(e_idList) {
+      if(!e_idList.length) return
+      const eiList = e_idList.map(id => this.enemy.findIndex(e => e.id === id))
+      eiList.sort((a, b) => b - a)
+      for(const e_i of eiList) {
         // 清除减速持续时间定时器
         if(this.enemy[e_i].durationTimer) {
           clearTimeout(this.enemy[e_i].durationTimer)
@@ -747,22 +763,23 @@ export default {
     handleSkill(index) {
       const { name, damage, cd, audioKey, showTime } = this.skillList[index]
       if(name !== '礼物') {
-        const e_iList = []
-        for(const e_i in this.enemy) {
-          this.enemy[e_i].hp.cur -= damage
-           if(this.enemy[e_i].hp.cur <= 0) {
-            this.money += this.enemy[e_i].reward
-            e_iList.push(e_i)
+        const e_idList = []
+        for(const enemy of this.enemy) {
+          const e_id = enemy.id
+          enemy.hp.cur -= damage
+           if(enemy.hp.cur <= 0) {
+            this.money += enemy.reward
+            e_idList.push(e_id)
             // 遍历清除防御塔里的该攻击目标
             for(const t of this.tower) {
-              t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === +e_i), 1)
+              t.targetIndexList.splice(t.targetIndexList.findIndex(item => item === e_id), 1)
             }
           }
           if(name === "肉弹冲击") {
-            this.slowEnemy(e_i, {num: 0, time: 6000})
+            this.slowEnemy(e_id, {num: 0, time: 6000})
           }
         }
-        this.removeEnemy(e_iList)
+        this.removeEnemy(e_idList)
       } else {
         this.money += randomNum(1, 100)
       }
@@ -793,18 +810,6 @@ export default {
         }
       }
       this.gridInfo.arr = arr
-    },
-    /** 画攻击范围 */
-    drawAttackScope(tower) {
-      if(!tower) return
-      const size_2 = this.gridInfo.size / 2
-      const {r, x, y} = tower
-      // arc (x, y, 半径, 0, 0到 2 * Math.PI 弧度, ture(逆时针))
-      // this.ctx.beginPath()
-      this.ctx.arc(x + size_2, y + size_2, r, 0, 2 * Math.PI, false)
-      this.ctx.lineWidth = 2
-      this.ctx.strokeStyle = '#282c34'
-      this.ctx.stroke()
     },
     /** 初始化行动轨迹 */
     initMovePath() {
@@ -868,14 +873,14 @@ export default {
     },
     /** 返回进入攻击范围的值的数组 */
     enterAttackScopeList(enemyList, tower) {
-      const list = enemyList.reduce((pre, enemy, index) => {
+      const list = enemyList.reduce((pre, enemy) => {
         if(this.checkValInCircle(enemy, tower)) {
-          pre.push({curIndex: enemy.curIndex, index})
+          pre.push({curIndex: enemy.curIndex, id: enemy.id})
         }
         return pre
       }, [])
       list.sort((a, b) => b.curIndex - a.curIndex)
-      return list.map(item => item.index)
+      return list.map(item => item.id)
     },
     /** 判断值是否在圆内 */
     checkValInCircle(enemy, tower) {
@@ -942,6 +947,7 @@ export default {
     playDomAudio(id, volume) {
       const audioWrap = document.querySelector('#audio-wrap')
       const audioDom = audioWrap.querySelector(`#${id}`)
+      if(!audioDom) return
       audioDom.play()
       audioDom.volume = volume || 1
     },
