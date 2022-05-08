@@ -80,6 +80,8 @@
           </span>
         </div>
         <!-- 技能: 肉弹冲击 -->
+        <div v-if="skillList[0].isShow" class="skill-boom"></div>
+        <!-- 技能: 肉弹冲击 -->
         <img v-if="skillList[1].isShow" class="skill-rush" src="./assets/img/meat-rush.png" alt="">
         <!-- 终点 -->
         <div class="terminal">
@@ -546,6 +548,7 @@ export default {
       const { speed: e_speed, curSpeed } = this.enemy[e_i]
       // 当前已经被眩晕了不能减速了
       if(curSpeed === 0) return
+      // 新增或重置减速定时器
       if(this.enemy[e_i].durationTimer) {
         clearTimeout(this.enemy[e_i].durationTimer)
         this.enemy[e_i].durationTimer = setTimeout(() => {
@@ -562,8 +565,10 @@ export default {
           }, t_slow.time)
         )
       }
-      if(this.enemy[e_i].curSpeed === e_speed) {
-        this.enemy[e_i].curSpeed = t_slow.num ? e_speed / t_slow.num : t_slow.num
+      // 减速敌人
+      const newSpeed = t_slow.num ? e_speed / t_slow.num : t_slow.num
+      if(newSpeed < curSpeed) {
+        this.enemy[e_i].curSpeed = newSpeed
       }
     },
     /** 画敌人 */
@@ -733,6 +738,7 @@ export default {
         // 清除减速持续时间定时器
         if(this.enemy[e_i].durationTimer) {
           clearTimeout(this.enemy[e_i].durationTimer)
+          this.enemy[e_i].durationTimer = null
         }
         this.removeEnemySkillTimer(e_i)
         this.removeAudio(this.enemy[e_i].id)
@@ -1256,6 +1262,30 @@ export default {
             color: #888;
             font-weight: bold;
           }
+        }
+      }
+      .skill-boom {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        height: 400px;
+        background: url(./assets/img/boom.png) no-repeat;
+        background-size: 4000px 100%;
+        background-position: 0 0;
+        animation: skill-boom 1.5s steps(10) forwards;
+      }
+      @keyframes skill-boom {
+        0% {
+          background-position: 0 0;
+        }
+        90% {
+          background-position: -4000px 0;
+        }
+        100% {
+          background-position: -4000px 0;
+          display: none;
         }
       }
       .skill-rush {
