@@ -153,7 +153,7 @@ export default {
       // 生命值
       hp: 10,
       // 金钱
-      money: 600,
+      money: 60000,
       // 增加的金钱
       addMoney: {num: '', timer: null, time: 1000},
       // 生产的金钱
@@ -325,7 +325,7 @@ export default {
         if(!enemyList.length && this.hp) {
           this.timeDiff.curTime = 0
           this.timeDiff.stopTime = 0
-          this.level++
+          this.$nextTick(() => {this.level++})
         }
         const tower = this.tower
         for(let t_i in tower) {
@@ -359,7 +359,6 @@ export default {
       this.imgOnloadObj = await this.loadImage(this.imgObj);
       this.towerOnloadImg = await this.loadImage(this.towerList, 'img');
       this.towerBulletOnloadImg = await this.loadImage(this.towerList, 'bulletImg');
-      // this.makeEnemy(true)
       this.startAnimation()
     },
     /** 点击获取鼠标位置 操作塔防 */
@@ -448,7 +447,7 @@ export default {
         const bullet = {x: begin.x, y: begin.y, addX, addY, xy: 0, x_y: distance, e_id}
         this.tower[t_i].bulletArr.push(bullet)
         if(name === 'PDD') {
-          this.playDomAudio(id, 0.5)
+          this.playDomAudio(id, 0.4)
         }
       }
     },
@@ -688,9 +687,10 @@ export default {
     /** 设置敌人技能 */
     setEnemySkill(enemyName, e_id) {
       const e_i = this.enemy.findIndex(e => e.id === e_id)
-      if(!this.enemy[e_i].skill) return
+      if(!this.enemy[e_i] || !this.enemy[e_i].skill) return
       this.enemy[e_i].skill.curTime = Date.now()
       const {curFloorI: _curFloorI, id, hp} = this.enemy[e_i]
+      let volume = 1
       // 舞王僵尸技能
       if(enemyName === '舞王') {
         const total = this.floorTile.num - 1
@@ -717,8 +717,9 @@ export default {
       } else if(enemyName === '坤坤') {
         const newHp = hp.cur + 100
         this.enemy[e_i].hp.cur = limitRange(newHp, newHp, hp.sum)
+        volume = 0.7
       }
-      this.playDomAudio(id)
+      this.playDomAudio(id, volume)
     },
     /** 召唤敌人的处理 */
     callEnemy(newEnemy) {
@@ -732,17 +733,28 @@ export default {
     /** 消灭敌人 */
     removeEnemy(e_idList) {
       if(!e_idList.length) return
-      const eiList = e_idList.map(id => this.enemy.findIndex(e => e.id === id))
+      // const eiList = e_idList.map(id => this.enemy.findIndex(e => e.id === id))
+      const eiList = e_idList.reduce((pre, id) => {
+        const e_i = this.enemy.findIndex(e => e.id === id)
+        if(e_i !== -1) pre.push(e_i)
+        return pre
+      }, [])
       eiList.sort((a, b) => b - a)
-      for(const e_i of eiList) {
-        // 清除减速持续时间定时器
-        if(this.enemy[e_i].durationTimer) {
-          clearTimeout(this.enemy[e_i].durationTimer)
-          this.enemy[e_i].durationTimer = null
+      // 这里会有执行时机的问题
+      try {
+        for(const e_i of eiList) {
+          if(!this.enemy[e_i]) return
+          // 清除减速持续时间定时器
+          if(this.enemy[e_i].durationTimer) {
+            clearTimeout(this.enemy[e_i].durationTimer)
+            this.enemy[e_i].durationTimer = null
+          }
+          this.removeEnemySkillTimer(e_i)
+          this.removeAudio(this.enemy[e_i].id)
+          this.enemy.splice(e_i, 1)
         }
-        this.removeEnemySkillTimer(e_i)
-        this.removeAudio(this.enemy[e_i].id)
-        this.enemy.splice(e_i, 1)
+      } catch (error) {
+        console.log('error: ', error);
       }
     },
     /** 清除敌人技能定时器 */
