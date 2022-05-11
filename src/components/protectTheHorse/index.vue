@@ -394,7 +394,7 @@ export default {
         this.shootBullet(eIdList, t_i)
       }, rate, { leading: true, trailing: false })
       // 处理多个相同塔防的id值
-      const id = this.tower.reduce((pre, cur) => cur.name === name ? ++pre : pre, 0)
+      const id = Date.now()
       const tower = {x, y, id: audioKey + id, shootFun, targetIndexList: [], bulletArr: [], ...this.towerList[index], img: this.towerOnloadImg[index], bulletImg: this.towerBulletOnloadImg[index]}
       this.tower.push(tower)
       // 用于标记是哪个塔防 10 + index
@@ -651,7 +651,7 @@ export default {
       this.timeDiff.curTime = Date.now()
       const enemyItem = this.$lodash.cloneDeep(this.enemySource[this.levelEnemy[this.createdEnemyNum]])
       const {audioKey, name} = enemyItem
-      const id = this.enemy.reduce((pre, cur) => cur.name === name ? ++pre : pre, 0)
+      const id = Date.now()
       enemyItem.id = audioKey + id
       this.enemy.push(enemyItem)
       this.createdEnemyNum++
