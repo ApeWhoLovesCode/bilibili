@@ -465,17 +465,20 @@ export default {
     /** 画并处理子弹 */
     drawAndMoveBullet() {
       const e_idList = []
-      for(const t of this.tower) {
+      for(const t_i in this.tower) {
+        const t = this.tower[t_i]
         for(const b_i in t.bulletArr) {
           const {w, h} = t.bSize
-          const {x, y, addX, addY, x_y} = t.bulletArr[b_i]
+          // const {x, y, addX, addY, x_y} = t.bulletArr[b_i]
+          const {x, y, x_y, e_id} = t.bulletArr[b_i]
           this.ctx.drawImage(t.bulletImg, x - w / 2, y - h / 2, w, h)
+          // 重新计算子弹离敌人的距离
+          const {addX, addY, xy} = this.bulletEnemyDistance(e_id, t_i, b_i)
           t.bulletArr[b_i].x += addX
           t.bulletArr[b_i].y += addY
-          t.bulletArr[b_i].xy += t.speed
+          t.bulletArr[b_i].xy = xy
           // 子弹击中敌人
-          if(t.bulletArr[b_i].xy >= x_y) {
-            const {e_id} = t.bulletArr[b_i]
+          if(t.bulletArr[b_i].xy <= this.gridInfo.size / 2) {
             // 清除子弹
             t.bulletArr.splice(b_i, 1)
             // 敌人扣血
@@ -865,6 +868,23 @@ export default {
       }, [])
       list.sort((a, b) => b.curIndex - a.curIndex)
       return list.map(item => item.id)
+    },
+    /** 计算子弹和敌人的距离 */
+    bulletEnemyDistance(e_id, t_i, b_i) {
+      const enemy = this.enemy.find(e => e.id === e_id)
+      if(!enemy) return
+      const {x, y, w, h} = enemy
+      // 敌人中心坐标
+      const _x = x + w / 2, _y = y + h / 2
+      const {speed, bulletArr } = this.tower[t_i]
+      // 两坐标间的差值
+      const diff = {x: _x - bulletArr[b_i].x, y: _y - bulletArr[b_i].y}
+      // 子弹和敌人的距离
+      const distance = this.powAndSqrt(diff.x, diff.y)
+      console.log('distance: ', distance);
+      return {
+        addX: speed * diff.x / distance, addY: speed * diff.y / distance, x_y: distance
+      }
     },
     /** 判断值是否在圆内 */
     checkValInCircle(enemy, tower) {
