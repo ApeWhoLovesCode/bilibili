@@ -11,38 +11,15 @@
       <div class="title">{{title}}</div>
       <div class="canvas-wrap" @click="hiddenTowerOperation">
         <!-- 游戏顶部信息展示区域 -->
-        <div class="top-wrap">
-          <div class="left">
-            <span class="icon-wrap">
-              <span class="iconfont icon-jinbi1"></span>
-            </span>
-            <span class="money">{{money}}</span>
-            <span v-if="addMoney.num" class="add-money">{{addMoney.num}}</span>
-          </div>
-          <div class="center">
-            <span class="level fff-color">{{level + 1}}</span> 
-            <span class="fff-color" style="margin:0 4px;">/</span>
-            <span class="level2 fff-color">∞</span> 
-            波僵尸
-          </div>
-          <div class="right">
-            <el-tooltip effect="dark" content="开始 / 暂停游戏" placement="bottom">
-              <span class="icon-wrap icon-hover" @click="gamePause()">
-                <span class="iconfont" :class="isPause ? 'icon-kaishi1' : 'icon-24gf-pause2'"></span>
-              </span>
-            </el-tooltip>
-            <el-tooltip effect="dark" content="播放 / 关闭音乐" placement="bottom">
-              <span class="icon-wrap icon-hover" @click="playBgAudio()">
-                <span class="iconfont" :class="isPlayBgAudio ? 'icon-mn_shengyin_fill' : 'icon-mn_shengyinwu_fill'"></span>
-              </span>
-            </el-tooltip>
-            <el-tooltip effect="dark" content="其他工具（待开发）" placement="bottom">
-              <span class="icon-wrap icon-hover">
-                <span class="iconfont icon-xuanxiangka_fuzhi"></span>
-              </span>
-            </el-tooltip>
-          </div>
-        </div>
+        <GameNavBar 
+          :money="money"
+          :addMoney="addMoney"
+          :level="level"
+          :isPause="isPause"
+          :isPlayBgAudio="isPlayBgAudio"
+          @gamePause="gamePause"
+          @playBgAudio="playBgAudio"
+        />
         <!-- 游戏区域 -->
         <canvas ref="canvasRef" id="mycanvas" width="1050" height="600" @click="getMouse($event)"></canvas>
         <!-- 塔防的容器 -->
@@ -64,34 +41,12 @@
           </span>
         </div>
         <!-- 游戏底部技能区 -->
-        <div class="skill-wrap">
-          <span v-for="(item, index) in skillList" :key="index">
-            <el-tooltip effect="dark" placement="top">
-              <div slot="content" style="text-align: center">
-                <div>{{item.name}}</div>
-                <div>金额：{{item.money}}</div>
-              </div>
-              <span class="skill-item">
-                <span class="skill iconfont" :class="item.icon" @click="handleSkill(index)"></span>
-                <!-- <span class="skill-disable iconfont icon-disablecase"></span> -->
-                <span v-show="item.curTime" class="skill-disable skill-time">{{item.curTime / 1000}}</span>
-              </span>
-            </el-tooltip>
-          </span>
-        </div>
-        <!-- 技能: 肉弹冲击 -->
-        <div v-if="skillList[0].isShow" class="skill-boom"></div>
-        <!-- 技能: 肉弹冲击 -->
-        <img v-if="skillList[1].isShow" class="skill-rush" src="./assets/img/meat-rush.png" alt="">
+        <Skill :skillList="skillList" @handleSkill="handleSkill" />
         <!-- 终点 -->
         <div class="terminal">
           <div class="hp">{{hp}}</div>
           <img class="terminal-icon" src="./assets/img/horse1.png" alt="">
           <img v-show="proMoney.isShow" class="money-icon" src="./assets/img/Sun.gif" alt="" @click="proMoneyClick">
-        </div>
-        <!-- 游戏结束遮罩层 -->
-        <div v-if="isGameOver" class="gameover-wrap mask">
-          <div class="info">你为了保护大司马抵御了{{level}}波僵尸</div>
         </div>
         <!-- 游戏开始遮罩层 -->
         <div v-if="isGameBeginMask" class="game-begin mask">
@@ -105,6 +60,10 @@
             </div>
           </div>
         </div>
+        <!-- 游戏结束遮罩层 -->
+        <div v-if="isGameOver" class="gameover-wrap mask">
+          <div class="info">你为了保卫大司马抵御了{{level}}波僵尸</div>
+        </div>
       </div>
     </div>
   </div>
@@ -116,9 +75,13 @@
  * 1.子弹提前预判敌人位置
  * 2.群体伤害时清除错怪了
  */
-import Loading from './components/loading.vue'
-import SuperGif from './utils/libgif'
+import Loading from './components/loading'
+import GameNavBar from './components/gameNavBar'
+import Skill from './components/skill'
+
+import { loadImage, gifToStaticImg } from './utils/handleImg'
 import { limitRange, randomNum } from './utils/tools'
+
 import levelEnemyArr from './dataSource/levelEnemyArr'
 import towerData from './dataSource/towerData'
 import enemyData from './dataSource/enemyData'
@@ -129,6 +92,8 @@ export default {
   name: 'protect-horse',
   components: {
     Loading,
+    GameNavBar,
+    Skill,
   },
   data() {
     return {
@@ -356,9 +321,9 @@ export default {
       this.onKeyDown()
       await this.allGifToStaticImg()
       // 加载图片
-      this.imgOnloadObj = await this.loadImage(this.imgObj);
-      this.towerOnloadImg = await this.loadImage(this.towerList, 'img');
-      this.towerBulletOnloadImg = await this.loadImage(this.towerList, 'bulletImg');
+      this.imgOnloadObj = await loadImage(this.imgObj);
+      this.towerOnloadImg = await loadImage(this.towerList, 'img');
+      this.towerBulletOnloadImg = await loadImage(this.towerList, 'bulletImg');
       this.startAnimation()
     },
     /** 点击获取鼠标位置 操作塔防 */
@@ -779,7 +744,8 @@ export default {
     },
     /** 发动技能 */
     handleSkill(index) {
-      const { name, damage, cd, audioKey, showTime } = this.skillList[index]
+      const { name, money, damage, cd, audioKey, showTime } = this.skillList[index]
+      this.money -= money
       if(name !== '礼物') {
         const e_idList = []
         for(const enemy of this.enemy) {
@@ -969,58 +935,12 @@ export default {
       audioDom.play()
       audioDom.volume = volume || 1
     },
-    /** 单张gif转静态图片 */
-    gifToStaticImg(index) {
-      return new Promise((resolve, reject) => {
-        const {type, imgSource} = this.enemySource[index]
-        if(type !== 'gif') {
-          const newImg = new Image();
-          newImg.src = imgSource
-          this.enemySource[index].imgList = [newImg]
-          resolve()
-        }
-        const gifImg = document.createElement('img');
-        gifImg.src = imgSource
-        // gifImg.style.transform = 'rotate(90deg)';
-        // 创建gif实例
-        const rub = new SuperGif({ gif: gifImg } );
-        rub.load(() => {
-          const imgList = [];
-          for (let i = 1; i <= rub.get_length(); i++) {
-            // 遍历gif实例的每一帧
-            rub.move_to(i);
-            const imgUrl = rub.get_canvas()
-            imgList.push(imgUrl)
-          }
-          this.enemySource[index].imgList = imgList
-          resolve()
-        });
-      })
-    },
     /** 等待所有的gif图生成静态图片 */
     async allGifToStaticImg() {
-      return Promise.all(this.enemySource.map((item, index) => this.gifToStaticImg(index))).then(res => {
+      return Promise.all(this.enemySource.map(async (item, index) => {
+        return this.enemySource[index].imgList = await gifToStaticImg(item)
+      })).then(res => {
         this.loadingDone = true
-      })
-    },
-    /** 加载图片 imgUrl: 图片数组, objKey: 在数组中的key值  */
-    loadImage(imgUrl, objKey) {
-      return new Promise((resolve, reject) => {
-        const imgObj = {}; // 保存图片资源
-        let tempImg, imgLength = 0, loaded = 0;
-        for (let key in imgUrl) {
-          imgLength++; // 初始化要加载图片的总数
-          tempImg = new Image();
-          tempImg.src = !objKey ? imgUrl[key] : imgUrl[key][objKey];
-          imgObj[key] = tempImg;
-          tempImg.onload = function () {
-            loaded++; // 统计已经加载完毕的图像
-            // 所有的图片都加载完毕
-            if (loaded >= imgLength) {
-              resolve(imgObj)
-            }
-          };
-        }
       })
     },
     /** 监听用户的键盘事件 */
@@ -1109,218 +1029,6 @@ export default {
       background-image: radial-gradient(circle 500px at center, #16d9e3 0%, #30c7ec 47%, #46aef7 100%);
       border-radius: 4px;
       overflow: hidden;
-      .top-wrap {
-        position: absolute;
-        top: 0;
-        left: 30px;
-        right: 30px;
-        height: 45px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #d2f5fa;
-        border-bottom-left-radius: 12px;
-        border-bottom-right-radius: 12px;
-        padding: 0 20px;
-        box-shadow: -7px 4px 14px #1781c2;
-        user-select: none;
-        .left {
-          position: relative;
-          .icon-wrap {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            line-height: 30px;
-            text-align: center;
-            background: linear-gradient(to left top, #fffc00, #fefdee);
-            border-radius: 50px;
-            border: 1px solid #d8b356;
-            .iconfont {
-              font-size: 16px;
-              color: #c87a1a;
-            }
-          }
-          .money {
-            margin-left: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            color: @fontColor;
-          }
-          .add-money {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 13px;
-            color: @fontColor;
-            font-weight: bold;
-            margin-left: 6px;
-            opacity: 0;
-            animation: add-money 0.6s ease;
-          }
-          @keyframes add-money {
-            0% {
-              right: -30px;
-              opacity: 0;
-            }
-            50% {
-              right: -35px;
-              opacity: 1;
-            }
-            100% {
-              right: -40px;
-              opacity: 0;
-            }
-          }
-        }
-        .center {
-          box-sizing: border-box;
-          display: inline-block;
-          width: 200px;
-          height: 100%;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          font-size: 16px;
-          font-weight: bold;
-          color: @fontColor;
-          background: #1781c2;
-          border-radius: 40px;
-          border: 4px solid @fontColor;
-          box-shadow: -7px 4px 14px #1781c2,
-           inset 3px 4px 6px #082a74;
-          .fff-color {
-            color: #fff;
-          }
-          .level {
-            font-size: 16px;
-          }
-          .level2 {
-            font-size: 24px;
-            line-height: 24px;
-            margin-right: 8px;
-          }
-        } 
-        .right {
-          .icon-wrap {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            line-height: 30px;
-            text-align: center;
-            border-radius: 50px;
-            background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
-            margin-right: 20px;
-            cursor: pointer;
-            &:last-child {
-              margin-right: 0;
-            }
-            &:hover {
-              opacity: .85;
-              box-shadow: 2px 2px 5px 1px #439ce9;
-            }
-            .iconfont {
-              font-size: 16px;
-              color: #fff;
-            }
-          }
-        }
-      }
-      .skill-wrap {
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        align-items: center;
-        height: 48px;
-        background: #d2f5fa;
-        box-shadow: 3px -2px 14px 2px #0e80c7;
-        border-top-left-radius: 8px;
-        border-top-right-radius: 8px;
-        padding: 0 20px;
-        user-select: none;
-        .skill-item {
-          position: relative;
-          margin-right: 15px;
-          border-radius: 8px;
-          display: inline-block;
-          width: 40px;
-          height: 40px;
-          text-align: center;
-          line-height: 40px;
-          cursor: pointer;
-          &:hover {
-            background: rgba(216, 216, 216, 0.4);
-          }
-          .skill {
-            font-size: 32px;
-            color: @fontColor;
-            &:hover {
-              color: #157ab5;
-            }
-          }
-          .skill-disable {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            right: 0;
-            font-size: 32px;
-            color: rgba(85, 174, 247, 0.5);
-            background: rgba(216, 216, 216, 0.3);
-            border-radius: 50%;
-          }
-          .skill-time {
-            color: #888;
-            font-weight: bold;
-          }
-        }
-      }
-      .skill-boom {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 400px;
-        height: 400px;
-        background: url(./assets/img/boom.png) no-repeat;
-        background-size: 4000px 100%;
-        background-position: 0 0;
-        animation: skill-boom 1.5s steps(10) forwards;
-      }
-      @keyframes skill-boom {
-        0% {
-          background-position: 0 0;
-        }
-        90% {
-          background-position: -4000px 0;
-        }
-        100% {
-          background-position: -4000px 0;
-          display: none;
-        }
-      }
-      .skill-rush {
-        position: absolute;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: 500px;
-        animation: skill-rush 2s linear forwards;
-      }
-      @keyframes skill-rush {
-        0% {
-          left: 0;
-        }
-        25% {
-          left: 50%;
-        }
-        75% {
-          left: 55%;
-        }
-        100% {
-          left: 150%;
-        }
-      }
       .building-wrap {
         position: absolute;
         user-select: none;
