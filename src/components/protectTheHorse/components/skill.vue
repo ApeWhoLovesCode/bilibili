@@ -9,8 +9,8 @@
             <div>金额：{{item.money}}</div>
           </div>
           <span class="skill-item">
-            <span class="skill iconfont" :class="item.icon" @click="$emit('handleSkill', index)"></span>
-            <!-- <span class="skill-disable iconfont icon-disablecase"></span> -->
+            <span class="skill iconfont" :class="item.icon" @click="money >= item.money && $emit('handleSkill', index)"></span>
+            <span v-show="money < item.money" class="skill-disable iconfont icon-disablecase"></span>
             <span v-show="item.curTime" class="skill-disable skill-time">{{item.curTime / 1000}}</span>
           </span>
         </el-tooltip>
@@ -30,6 +30,10 @@ export default {
     skillList: {
       type: Array,
       default: () => []
+    },
+    money: {
+      type: Number,
+      default: 0
     }
   }
 }

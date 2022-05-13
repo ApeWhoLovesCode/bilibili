@@ -41,7 +41,7 @@
           </span>
         </div>
         <!-- 游戏底部技能区 -->
-        <Skill :skillList="skillList" @handleSkill="handleSkill" />
+        <Skill :skillList="skillList" :money="money" @handleSkill="handleSkill" />
         <!-- 终点 -->
         <div class="terminal">
           <div class="hp">{{hp}}</div>
@@ -118,7 +118,7 @@ export default {
       // 生命值
       hp: 10,
       // 金钱
-      money: 60000,
+      money: 600,
       // 增加的金钱
       addMoney: {num: '', timer: null, time: 1000},
       // 生产的金钱
@@ -467,18 +467,24 @@ export default {
       const e_idList = []
       for(const t_i in this.tower) {
         const t = this.tower[t_i]
-        for(const b_i in t.bulletArr) {
+        for(let b_i = t.bulletArr.length - 1; b_i >= 0; b_i--) {
           const {w, h} = t.bSize
-          // const {x, y, addX, addY, x_y} = t.bulletArr[b_i]
-          const {x, y, x_y, e_id} = t.bulletArr[b_i]
+          const {x, y, addX, addY, e_id} = t.bulletArr[b_i]
           this.ctx.drawImage(t.bulletImg, x - w / 2, y - h / 2, w, h)
           // 重新计算子弹离敌人的距离
-          const {addX, addY, xy} = this.bulletEnemyDistance(e_id, t_i, b_i)
+          const b_e_distance = this.bulletEnemyDistance(e_id, t_i, b_i)
+          if(b_e_distance) {
+            const {addX: _addX, addY: _addY, xy} = b_e_distance
+            // addX = _addX, addY = _addY
+            t.bulletArr[b_i].addX = _addX
+            t.bulletArr[b_i].addY = _addY
+            t.bulletArr[b_i].x_y = xy
+          }
           t.bulletArr[b_i].x += addX
           t.bulletArr[b_i].y += addY
-          t.bulletArr[b_i].xy = xy
+          t.bulletArr[b_i].xy += t.speed
           // 子弹击中敌人
-          if(t.bulletArr[b_i].xy <= this.gridInfo.size / 2) {
+          if(t.bulletArr[b_i].xy >= t.bulletArr[b_i].x_y) {
             // 清除子弹
             t.bulletArr.splice(b_i, 1)
             // 敌人扣血
@@ -869,21 +875,24 @@ export default {
       list.sort((a, b) => b.curIndex - a.curIndex)
       return list.map(item => item.id)
     },
-    /** 计算子弹和敌人的距离 */
+    /** 
+     * 计算子弹和敌人的距离
+     * 返回 x,y方向需要增加的值， xy: 塔和敌人的距离
+     */
     bulletEnemyDistance(e_id, t_i, b_i) {
       const enemy = this.enemy.find(e => e.id === e_id)
+      // 敌人已经死了，不用覆盖之前的值了
       if(!enemy) return
       const {x, y, w, h} = enemy
       // 敌人中心坐标
       const _x = x + w / 2, _y = y + h / 2
-      const {speed, bulletArr } = this.tower[t_i]
+      const { speed, bulletArr, x: tx, y: ty } = this.tower[t_i]
       // 两坐标间的差值
       const diff = {x: _x - bulletArr[b_i].x, y: _y - bulletArr[b_i].y}
       // 子弹和敌人的距离
       const distance = this.powAndSqrt(diff.x, diff.y)
-      console.log('distance: ', distance);
       return {
-        addX: speed * diff.x / distance, addY: speed * diff.y / distance, x_y: distance
+        addX: speed * diff.x / distance, addY: speed * diff.y / distance, xy: this.powAndSqrt(_x - tx, _y - ty)
       }
     },
     /** 判断值是否在圆内 */
