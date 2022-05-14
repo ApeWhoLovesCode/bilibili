@@ -28,7 +28,10 @@ const routes = [
     }
   },
   {
-    path: '/protectTheHorse', component: ProtectTheHorse, meta: {
+    path: '/protectTheHorse', redirect: '/protectTheHorse/0'
+  },
+  {
+    path: '/protectTheHorse/:id', component: ProtectTheHorse, meta: {
       title: "保卫大司马",
       name: "referrer",
       content: "no-referrer"
