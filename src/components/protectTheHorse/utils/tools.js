@@ -7,3 +7,12 @@ export function limitRange(num, min, max) {
 export function randomNum(min, max) {
   return Math.floor(Math.random() * (max - min) + min)
 }
+
+/** 等待多久 */
+export function waitTime(time) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve()
+    }, time);
+  })
+}

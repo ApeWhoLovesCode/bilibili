@@ -1,6 +1,6 @@
 <template>
   <div class='com-level-select'>
-    <div class="title">地图</div>
+    <div class="map-title">地图</div>
     <div 
       class="item" 
       v-for="(item,index) in levelData" 
@@ -47,7 +47,7 @@ export default {
   &:hover {
     transform: translate(50px, -50%);
   }
-  .title {
+  .map-title {
     font-size: 18px;
     font-weight: bold;
     color: #fff;

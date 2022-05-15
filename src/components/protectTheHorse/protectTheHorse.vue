@@ -7,7 +7,6 @@
       <audio ref="audioEndRef" :src="audioList[audioEnd]"></audio>
     </div>
     <div class="game-wrap">
-      <div class="title">{{title}}</div>
       <div class="canvas-wrap" @click="hiddenTowerOperation">
         <!-- 游戏顶部信息展示区域 -->
         <GameNavBar 
@@ -71,19 +70,15 @@
 <script>
 /**
  * 必要优化-待完成
- * 1.子弹提前预判敌人位置
- * 2.群体伤害时清除错怪了
+ * 1.removeEnemy 方法每次清除的敌人都是只有一个
  */
 import Loading from './components/loading'
 import GameNavBar from './components/gameNavBar'
 import Skill from './components/skill'
 
-import { loadImage, gifToStaticImg } from './utils/handleImg'
-import { limitRange, randomNum } from './utils/tools'
+import { limitRange, randomNum, waitTime } from './utils/tools'
 
 import levelEnemyArr from './dataSource/levelEnemyArr'
-import towerData from './dataSource/towerData'
-import enemyData from './dataSource/enemyData'
 import audioData from './dataSource/audioData'
 import skillData from './dataSource/skillData'
 import mapData, { mapGridNumList } from './dataSource/mapData'
@@ -99,11 +94,30 @@ export default {
     mapLevel: {
       type: Number,
       default: 0
-    }
+    },
+    enemySource: {
+      type: Array,
+      default: () => []
+    },
+    towerList: {
+      type: Array,
+      default: () => []
+    },
+    imgOnloadObj: {
+      type: Object,
+      default: () => {}
+    },
+    towerOnloadImg: {
+      type: Object,
+      default: () => {}
+    },
+    towerBulletOnloadImg: {
+      type: Object,
+      default: () => {}
+    },
   },
   data() {
     return {
-      title: '保卫大司马',
       // 浏览器大小变化
       resizeTimer: null,
       // canvas 对象
@@ -147,16 +161,8 @@ export default {
       enemy: [],
       // 偏移量y 是用来计算敌人与地板底部的距离 (两个地板(50*2)-敌人(h(75)+y(10))) = 10
       offset: {y: 10},
-      // 敌人资源
-      enemySource: enemyData,
       // 最小刻度
       minScale: 2,
-      // 所有静态图片资源
-      imgObj: {
-        floorTile: require("./assets/img/floor-tile.png")
-      },
-      // 加载完成的静态图片
-      imgOnloadObj: null,
       // 终点位置
       terminal: null,
       // 格子数量信息 arr: [[ 0:初始值(可以放塔)，1:地板，2:有阻挡物，10(有塔防：10塔防一，11塔防二...) ]]
@@ -169,12 +175,6 @@ export default {
       building: { left: 0, top: 0, isShow: false },
       // 塔防攻击范围
       buildingScope: {left: 0, top: 0, r: 0, isShow: false, towerIndex: 0},
-      // 塔防数据 
-      towerList: towerData,
-      // 塔防加载完成图片
-      towerOnloadImg: null,
-      // 塔防子弹加载完成图片
-      towerBulletOnloadImg: null,
       // 场上的防御塔数组 {x, y, shootFn(防抖的射击函数), targetIndexList(攻击的目标):[], bulletArr(子弹数组)[x,y(子弹当前位置),addX,addY(往目标方向增加的值),xy(当前距离),x_y(目标距离),e_i(目标索引)], ...this.towerList[i], onload-img, onload-bulletImg
       tower: [],
       // 是否播放背景音乐
@@ -333,14 +333,11 @@ export default {
       this.canvas = this.$refs.canvasRef;
       this.ctx = this.canvas.getContext("2d");
       this.floorTile.num = mapGridNumList[this.mapLevel]
-      await this.allGifToStaticImg()
       this.initAllGrid()
       this.initMovePath()
       this.onKeyDown()
-      // 加载图片
-      this.imgOnloadObj = await loadImage(this.imgObj);
-      this.towerOnloadImg = await loadImage(this.towerList, 'img');
-      this.towerBulletOnloadImg = await loadImage(this.towerList, 'bulletImg');
+      await waitTime(1000)
+      this.loadingDone = true
       this.startAnimation()
     },
     /** 点击获取鼠标位置 操作塔防 */
@@ -645,7 +642,7 @@ export default {
       enemyItem.id = audioKey + id
       this.enemy.push(enemyItem)
       this.createdEnemyNum++
-      this.handleEnemySkill(enemyItem.name, enemyItem.id)
+      this.handleEnemySkill(name, enemyItem.id)
       this.createAudio(audioKey, id)
     },
     /** 暂停后重新开始技能 */
@@ -714,21 +711,23 @@ export default {
     /** 召唤敌人的处理 */
     callEnemy(newEnemy) {
       const size = this.gridInfo.size
-      const { curFloorI, w, h } = newEnemy
+      const { curFloorI, w, h, audioKey } = newEnemy
       const { x, y } = this.movePath[curFloorI - 1]
+      const id = Date.now()
+      newEnemy.id = audioKey + id
       newEnemy.x = x - (w - size)
       newEnemy.y = y - (size - (size * 2 - h - this.offset.y))
       return newEnemy
     },
     /** 消灭敌人 */
     removeEnemy(e_idList) {
+      // console.log('e_idList: ', e_idList);
       if(!e_idList.length) return
-      // const eiList = e_idList.map(id => this.enemy.findIndex(e => e.id === id))
-      const eiList = e_idList.reduce((pre, id) => {
+      const eiList = Array.from(e_idList.reduce((pre, id) => {
         const e_i = this.enemy.findIndex(e => e.id === id)
-        if(e_i !== -1) pre.push(e_i)
+        if(e_i !== -1) pre.add(e_i)
         return pre
-      }, [])
+      }, new Set([])))
       eiList.sort((a, b) => b - a)
       // 这里会有执行时机的问题
       try {
@@ -970,14 +969,6 @@ export default {
       audioDom.play()
       audioDom.volume = volume || 1
     },
-    /** 等待所有的gif图生成静态图片 */
-    async allGifToStaticImg() {
-      return Promise.all(this.enemySource.map(async (item, index) => {
-        return this.enemySource[index].imgList = await gifToStaticImg(item)
-      })).then(res => {
-        this.loadingDone = true
-      })
-    },
     /** 监听用户的键盘事件 */
     onKeyDown() {
       document.onkeydown = (e) => {
@@ -1022,19 +1013,6 @@ export default {
     align-items: center;
     border: 1px solid #eee;
     border-radius: 8px;
-    .title {
-      position: absolute;
-      top: -45px;
-      left: 0;
-      right: 0;
-      font-size: 24px;
-      font-weight: bold;
-      height: 30px;
-      line-height: 30px;
-      color: #eee;
-      text-align: center;
-      user-select: none;
-    }
     .canvas-wrap {
       position: relative;
       padding: 50px 50px 50px;

@@ -1,43 +1,103 @@
 <template>
   <div id='protect-horse-index'>
     <div class="back" @click="$router.push('/')">回到首页</div>
-    <ProtectTheHorse v-if="isProtectTheHorse" :mapLevel="mapLevel" />
+    <div class="title">{{title}}</div>
+    <ProtectTheHorse
+      v-if="isProtectTheHorse" 
+      :mapLevel="mapLevel" 
+      :enemySource="enemySource"
+      :towerList="towerList"
+      :imgOnloadObj="imgOnloadObj"
+      :towerOnloadImg="towerOnloadImg"
+      :towerBulletOnloadImg="towerBulletOnloadImg"
+    />
     <LevelSelect :mapLevel="mapLevel" @switchMapLevel="switchMapLevel" />
+    <ProgressBar v-if="isProgressBar" :progress="progress" />
   </div>
 </template>
 
 <script>
+import ProgressBar from './components/progressBar'
 import ProtectTheHorse from './protectTheHorse'
 import LevelSelect from './components/levelSelect'
+
+import { loadImage, gifToStaticImg } from './utils/handleImg'
+import towerData from './dataSource/towerData'
+import enemyData from './dataSource/enemyData'
+
 export default {
   name: 'protect-horse-index',
   components: {
+    ProgressBar,
     ProtectTheHorse,
     LevelSelect,
   },
   props: {},
   data() {
     return {
-      // 当前选择的关卡
+      title: '保卫大司马',
+      // 当前选择的地图
       mapLevel: 1,
+      // 当前加载进度
+      progress: 0,
+      isProgressBar: true,
+      // 控制游戏区域的显示与隐藏
       isProtectTheHorse: false,
+      // 静态图片资源(地板，阻挡物等)
+      imgObj: {
+        floorTile: require("./assets/img/floor-tile.png")
+      },
+      // 敌人资源
+      enemySource: enemyData,
+      // 塔防数据 
+      towerList: towerData,
+      // 加载完成的静态图片
+      imgOnloadObj: null,
+      // 塔防加载完成图片
+      towerOnloadImg: null,
+      // 塔防子弹加载完成图片
+      towerBulletOnloadImg: null,
     };
+  },
+  computed: {
+    progressStep() {
+      return 95 / this.enemySource.length 
+    }
   },
   created() {
     this.mapLevel = +this.$route.params.id
-    this.isProtectTheHorse = true
+    this.init()
   },
   methods: {
+    /** 初始化加载图片等内容 */
+    async init() {
+      // 加载图片
+      await this.allGifToStaticImg()
+      this.imgOnloadObj = await loadImage(this.imgObj);
+      this.towerOnloadImg = await loadImage(this.towerList, 'img');
+      this.towerBulletOnloadImg = await loadImage(this.towerList, 'bulletImg');
+      this.progress = 100
+      setTimeout(() => {
+        this.isProgressBar = false
+      }, 100);
+      this.isProtectTheHorse = true
+    },
     /** 切换地图 */
     switchMapLevel(index) {
       this.mapLevel = index
       this.$router.push(`/protectTheHorse/${index}`)
       this.isProtectTheHorse = false
       this.$nextTick(() => {this.isProtectTheHorse = true})
-      // 地图数据更新
-      // 格子信息清空
-      // 在场敌人和塔防清空
-      // 金钱和关卡清空
+    },
+    /** 等待所有的gif图生成静态图片 */
+    async allGifToStaticImg() {
+      return Promise.all(this.enemySource.map(async (item, index) => {
+        this.enemySource[index].imgList = await gifToStaticImg(item)
+        this.progress += this.progressStep
+        return 
+      })).then(res => {
+        
+      })
     },
   }
 }
@@ -46,6 +106,7 @@ export default {
 @size: 50px; 
 @fontColor: #5bb3e5;
 #protect-horse-index {
+  position: relative;
   box-sizing: border-box;
   width: 100vw;
   height: 100vh;
@@ -54,6 +115,29 @@ export default {
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  .title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+    font-weight: bold;
+    height: 30px;
+    line-height: 30px;
+    color: #eee;
+    text-align: center;
+    user-select: none;
+    animation: fall-animation .8s ease forwards;
+  }
+  @keyframes fall-animation {
+    0% {
+      opacity: 0;
+      top: -50px;
+    }
+    100% {
+      opacity: 1;
+      top: 1%;
+    }
+  }
   .back {
     position: fixed;
     top: 20px;
