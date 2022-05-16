@@ -71,17 +71,20 @@
 /**
  * 必要优化-待完成
  * 1.removeEnemy 方法每次清除的敌人都是只有一个
+ * 2.敌人死后，子弹会打给另一个僵尸
+ * 3.炸弹没清场
+ * 4.并不是攻击最前面的敌人
  */
 import Loading from './components/loading'
 import GameNavBar from './components/gameNavBar'
 import Skill from './components/skill'
 
-import { limitRange, randomNum, waitTime } from './utils/tools'
+import { limitRange, randomNum, createProbNum, waitTime } from './utils/tools'
 
 import levelEnemyArr from './dataSource/levelEnemyArr'
 import audioData from './dataSource/audioData'
 import skillData from './dataSource/skillData'
-import mapData, { mapGridNumList } from './dataSource/mapData'
+import mapData, { mapGridInfoList } from './dataSource/mapData'
 
 export default {
   name: 'protect-horse',
@@ -146,7 +149,7 @@ export default {
       // 生产的金钱
       proMoney: {isShow: false, timer: null, interval: 10000, money: 25},
       // 敌人生成间隔时间
-      intervalTime: 800, 
+      intervalTime: 800,
       // 存放上一次和本次生成的敌人时间戳，用于暂停判断还有多久产生敌人
       timeDiff: {curTime: 0, stopTime: 0},
       // 生成敌人的定时器
@@ -284,10 +287,11 @@ export default {
             this.levelEnemy = levelEnemyArr[val]
           } else {
             const list = [0]
-            const num = randomNum(1, 100)
+            const isUpdate = (val / 2) > levelEnemyArr.length ? true : false
             for(let i = 0; i < val; i++) {
-              list.push(num > 3 ? 11 : 14)
+              list.push(createProbNum(isUpdate))
             }
+            // console.log('list: ', list);
             this.levelEnemy = list
           }
           if(val) {
@@ -332,11 +336,11 @@ export default {
     async init() {
       this.canvas = this.$refs.canvasRef;
       this.ctx = this.canvas.getContext("2d");
-      this.floorTile.num = mapGridNumList[this.mapLevel]
+      this.floorTile.num = mapGridInfoList[this.mapLevel].num
       this.initAllGrid()
       this.initMovePath()
       this.onKeyDown()
-      await waitTime(1000)
+      await waitTime(800)
       this.loadingDone = true
       this.startAnimation()
     },
@@ -438,6 +442,8 @@ export default {
         if (!that.isPause) {
           // 时间间隔为 1000/60 每秒 60 帧
           that.animationFrame = requestAnimationFrame(go);
+        } else {
+          cancelAnimationFrame(that.animationFrame)
         }
       })();
     },
@@ -637,7 +643,12 @@ export default {
     setEnemy() {
       this.timeDiff.curTime = Date.now()
       const enemyItem = this.$lodash.cloneDeep(this.enemySource[this.levelEnemy[this.createdEnemyNum]])
-      const {audioKey, name} = enemyItem
+      const size = this.gridInfo.size
+      const {audioKey, name, h} = enemyItem
+      // 设置敌人的初始位置
+      const {x, y} = mapGridInfoList[this.mapLevel]
+      enemyItem.x = x
+      enemyItem.y = y - (size - (size * 2 - h - this.offset.y))
       const id = Date.now()
       enemyItem.id = audioKey + id
       this.enemy.push(enemyItem)
@@ -826,7 +837,8 @@ export default {
     initMovePath() {
       const size = this.gridInfo.size
       // 刚开始就右移了，所有该初始格不会算上去
-      const movePathItem = {x: 0, y: 50, x_y: 3}
+      const movePathItem = JSON.parse(JSON.stringify(mapGridInfoList[this.mapLevel]))
+      delete movePathItem.num
       const movePath = []
       // 控制x y轴的方向 1:左 2:下 3:右 4:上
       let x_y = 3

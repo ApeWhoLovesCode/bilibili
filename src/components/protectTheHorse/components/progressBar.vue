@@ -22,17 +22,50 @@ export default {
       canvas: null,
       ctx: null,
       canvasInfo: {w: 0, h: 0},
+      curProgress: 0,
+      animationFrame: null,
     };
   },
   computed: {
     canvasStyle() {
-      const { w, h } = this.canvasInfo
-      // return {width: w + 'px', height: h + 'px', background: '#fff'}
+      const { h } = this.canvasInfo
       return {background: '#fff', borderRadius: `${h / 2}px`}
     }
   },
   watch: {
     progress(newVal, oldVal) {
+      this.curProgress = oldVal
+      this.startAnimation(newVal)
+    }
+  },
+  mounted() {
+    // background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+    this.getCanvasInfo();
+  },
+  beforeDestroy() {
+    cancelAnimationFrame(this.animationFrame)
+  },
+  methods: {
+    getCanvasInfo() {
+      this.canvas = this.$refs.progressCanvasRef;
+      this.ctx = this.canvas.getContext("2d");
+      this.canvasInfo.w = Math.round(document.documentElement.clientWidth * 0.6)
+      this.canvasInfo.h = Math.round(document.documentElement.clientHeight * 0.05)
+    },
+    /** 开启动画绘画 */
+    startAnimation(newVal) {
+      const that = this;
+      (function go() {
+        that.drawProgress(++that.curProgress);
+        if (that.curProgress < newVal ) {
+          // 时间间隔为 1000/60 每秒 60 帧
+          that.animationFrame = requestAnimationFrame(go);
+        } else {
+          cancelAnimationFrame(that.animationFrame)
+        }
+      })();
+    },
+    drawProgress(newVal) {
       const { w, h } = this.canvasInfo
       this.ctx.clearRect(0, 0, w, h);
       const _w = w * newVal / 100
@@ -43,19 +76,7 @@ export default {
       grad.addColorStop(1,"#4facfe");                  
       this.ctx.fillStyle = grad
       this.ctx.fillRect(0, 0, _w, h)
-    }
-  },
-  mounted() {
-    // background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
-    this.getCanvasInfo();
-  },
-  methods: {
-    getCanvasInfo() {
-      this.canvas = this.$refs.progressCanvasRef;
-      this.ctx = this.canvas.getContext("2d");
-      this.canvasInfo.w = Math.round(document.documentElement.clientWidth * 0.6)
-      this.canvasInfo.h = Math.round(document.documentElement.clientHeight * 0.05)
-    }
+    },
   }
 }
 </script>

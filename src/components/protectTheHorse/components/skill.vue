@@ -4,9 +4,10 @@
     <div class="skill-wrap">
       <span v-for="(item, index) in skillList" :key="index">
         <el-tooltip effect="dark" placement="top">
-          <div slot="content" style="text-align: center">
-            <div>{{item.name}}</div>
-            <div>金额：{{item.money}}</div>
+          <div slot="content" class="com-skill-tooltip">
+            <div class="skill-name">{{item.name}}</div>
+            <div>{{item.instructions}}</div>
+            <div>金额：{{item.money}} cd：{{item.cd / 1000}}秒</div>
           </div>
           <span class="skill-item">
             <span class="skill iconfont" :class="item.icon" @click="money >= item.money && $emit('handleSkill', index)"></span>
@@ -135,6 +136,19 @@ export default {
     100% {
       left: 150%;
     }
+  }
+}
+.com-skill-tooltip {
+  max-width: 130px;
+  text-align: center;
+  font-size: 12px;
+  .skill-name {
+    font-weight: bold;
+    font-size: 14px;
+  }
+  div {
+    white-space: pre-wrap;
+    margin-bottom: 3px;
   }
 }
 </style>

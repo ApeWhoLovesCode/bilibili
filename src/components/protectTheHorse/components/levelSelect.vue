@@ -8,12 +8,13 @@
       :class="{'active': mapLevel === index}" 
       @click="switchMapLevel(index)"
     >
-      {{item.name}}
+      {{item}}
     </div>
   </div>
 </template>
 
 <script>
+import { mapGridInfoList } from '../dataSource/mapData'
 export default {
   name: '',
   props: {
@@ -24,8 +25,11 @@ export default {
   },
   data() {
     return {
-      levelData: [{name: '1'},{name: '2'}]
+      levelData: []
     };
+  },
+  created() {
+    this.levelData = mapGridInfoList.map((item, i) => i + 1)
   },
   methods: {
     switchMapLevel(index) {

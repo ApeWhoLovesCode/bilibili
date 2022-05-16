@@ -37,7 +37,7 @@ export default {
     return {
       title: '保卫大司马',
       // 当前选择的地图
-      mapLevel: 1,
+      mapLevel: 0,
       // 当前加载进度
       progress: 0,
       isProgressBar: true,
@@ -79,8 +79,8 @@ export default {
       this.progress = 100
       setTimeout(() => {
         this.isProgressBar = false
-      }, 100);
-      this.isProtectTheHorse = true
+        this.isProtectTheHorse = true
+      }, 200);
     },
     /** 切换地图 */
     switchMapLevel(index) {
