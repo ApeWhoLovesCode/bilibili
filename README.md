@@ -6,6 +6,8 @@
 
 #### b站效果展示视频：https://www.bilibili.com/video/bv1564y1U71T
 
+#### csdn介绍：https://blog.csdn.net/weixin_52014110/article/details/116353612
+
 #### 两个页面的效果展示：
 
 ![](https://gitee.com/wooden-joint/bilibili/raw/master/img/20210502142358.png)
