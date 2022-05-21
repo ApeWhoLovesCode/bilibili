@@ -21,13 +21,18 @@
         <!-- 游戏区域 -->
         <canvas ref="canvasRef" id="mycanvas" width="1050" height="600" @click="getMouse($event)"></canvas>
         <!-- 塔防的容器 -->
-        <!-- 上面和左边内边距是 50px -->
         <div v-show="building.isShow" class="building-wrap" :style="buildingStyle">
           <img src="./assets/img/add.png" alt="" class="add-icon">
           <div class="tower-wrap" :class="buildingClass">
-            <div class="tower" :class="money < item.money ? 'tower-no-money' : ''" v-for="(item, index) in towerList" :key="index" @click="buildTower(index)">
+            <div 
+              class="tower" 
+              :class="{'tower-no-money': money < item.money}" 
+              v-for="(item, index) in towerList" 
+              :key="index"
+              @click="buildTower(index)"
+            >
               <img :src="item.img" alt="" class="tower-icon">
-              <div class="info">￥{{item.money}}</div>
+              <div class="tower-info">￥{{item.money}}</div>
             </div>
           </div>
         </div>
@@ -70,10 +75,8 @@
 <script>
 /**
  * 必要优化-待完成
- * 1.removeEnemy 方法每次清除的敌人都是只有一个
- * 2.敌人死后，子弹会打给另一个僵尸
- * 3.炸弹没清场
- * 4.并不是攻击最前面的敌人
+ * 1.敌人图片翻转
+ * 2.手机屏幕翻转兼容
  */
 import Loading from './components/loading'
 import GameNavBar from './components/gameNavBar'
@@ -291,11 +294,11 @@ export default {
             for(let i = 0; i < val; i++) {
               list.push(createProbNum(isUpdate))
             }
-            // console.log('list: ', list);
+            console.log('list: ', list);
             this.levelEnemy = list
           }
           if(val) {
-            this.money += this.proMoney.money * (this.level + 1)
+            this.money += (this.level + 1) * 10
             this.makeEnemy()
             this.$refs.audioLevelRef.play()
           }
@@ -366,7 +369,7 @@ export default {
     },
     /** 点击建造塔防 */
     buildTower(index) {
-      const { rate, money, name, audioKey } = this.towerList[index]
+      const { rate, money, audioKey } = this.towerList[index]
       if(this.money < money) return
       this.money -= money
       const {left: x, top: y} = this.building
@@ -567,8 +570,9 @@ export default {
     drawEnemy(index) {
       if(!this.enemy[index]) return
       const { x, y, w, h, imgList, imgIndex, hp, curSpeed, speed } = this.enemy[index]
-      // this.ctx.translate(200, 0);
-      // this.ctx.scale(-1, 1)
+      // 翻转图片
+      // ctx.translate(200, 0);
+      // imgList[imgIndex].scale(-1, 1)
       this.ctx.drawImage(imgList[imgIndex], x, y, w, h) 
       // 绘画减速效果
       if(curSpeed !== speed) {
@@ -700,7 +704,7 @@ export default {
             case 2: newEnemy.curFloorI = limitRange(_curFloorI + 1, 1, total); break;
             case 3: newEnemy.curFloorI = limitRange(_curFloorI + 2, 1, total); break;
           }
-          this.enemy.push(this.callEnemy(newEnemy))
+          this.enemy.push(this.callEnemy(newEnemy, i))
         }
       } else if(enemyName === '弗利萨') {
         const total = this.floorTile.num - 1
@@ -710,21 +714,21 @@ export default {
             case 0: newEnemy.curFloorI = limitRange(_curFloorI - 2, 1, total); break;
             case 1: newEnemy.curFloorI = limitRange(_curFloorI - 1, 1, total); break;
           }
-          this.enemy.push(this.callEnemy(newEnemy))
+          this.enemy.push(this.callEnemy(newEnemy, i))
         }
       } else if(enemyName === '坤坤') {
-        const newHp = hp.cur + 100
+        const newHp = hp.cur + 200
         this.enemy[e_i].hp.cur = limitRange(newHp, newHp, hp.sum)
         volume = 0.7
       }
       this.playDomAudio(id, volume)
     },
     /** 召唤敌人的处理 */
-    callEnemy(newEnemy) {
+    callEnemy(newEnemy, i) {
       const size = this.gridInfo.size
       const { curFloorI, w, h, audioKey } = newEnemy
       const { x, y } = this.movePath[curFloorI - 1]
-      const id = Date.now()
+      const id = Date.now() + i
       newEnemy.id = audioKey + id
       newEnemy.x = x - (w - size)
       newEnemy.y = y - (size - (size * 2 - h - this.offset.y))
@@ -732,7 +736,6 @@ export default {
     },
     /** 消灭敌人 */
     removeEnemy(e_idList) {
-      // console.log('e_idList: ', e_idList);
       if(!e_idList.length) return
       const eiList = Array.from(e_idList.reduce((pre, id) => {
         const e_i = this.enemy.findIndex(e => e.id === id)
@@ -885,11 +888,11 @@ export default {
     enterAttackScopeList(enemyList, tower) {
       const list = enemyList.reduce((pre, enemy) => {
         if(this.checkValInCircle(enemy, tower)) {
-          pre.push({curIndex: enemy.curIndex, id: enemy.id})
+          pre.push({curFloorI: enemy.curFloorI, id: enemy.id})
         }
         return pre
       }, [])
-      list.sort((a, b) => b.curIndex - a.curIndex)
+      list.sort((a, b) => b.curFloorI - a.curFloorI)
       return list.map(item => item.id)
     },
     /** 
@@ -1058,19 +1061,20 @@ export default {
             border: 2px solid #fff;
             margin-bottom: 10px;
             box-sizing: border-box;
+            overflow: hidden;
             .tower-icon {
               width: 100%;
               height: 100%;
             }
-            .info {
+            .tower-info {
               position: absolute;
               left: 0;
               right: 0;
               bottom: 0;
               text-align: center;
-              font-size: 14px;
+              font-size: 13px;
               color: #fff;
-              background: rgba(0, 0, 0, .35);
+              background: rgba(0, 0, 0, .4);
             }
           }
           .tower-no-money {
@@ -1156,6 +1160,8 @@ export default {
       }
       .gameover-wrap {
         .info {
+          font-size: 36px;
+          font-weight: bold;
           color: #fff;
         }
       }

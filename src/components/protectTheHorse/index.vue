@@ -155,4 +155,18 @@ export default {
   }
   
 }
+// @media screen and (orientation: portrait) {
+//   #protect-horse-index {
+//     position: fixed;
+//     width: 100vh;
+//     height: 100vw;
+//     top: 0;
+//     left: 100vw;
+//     -webkit-transform: rotate(90deg);
+//     -moz-transform: rotate(90deg);
+//     -ms-transform: rotate(90deg);
+//     transform: rotate(90deg);
+//     transform-origin: 0% 0%;
+//   }
+// }
 </style>
